@@ -1,0 +1,11 @@
+.env
+*.pyc
+__pycache__/
+empire.db
+output/
+logs/
+*.mp3
+*.mp4
+*.epub
+*.pdf
+*.zip

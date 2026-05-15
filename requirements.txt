@@ -1,0 +1,22 @@
+anthropic>=0.40.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+apscheduler>=3.10.0
+
+# Audio
+# elevenlabs>=1.0.0  # or install via: pip install elevenlabs
+
+# Social / Marketing
+tweepy>=4.14.0
+
+# Video (optional — for advanced video assembly)
+# moviepy>=1.0.3
+
+# Browser automation for KDP/ACX uploads (optional)
+# playwright>=1.40.0
+
+# Google Gemini (for cover art generation)
+# google-generativeai>=0.8.0
+
+# Ebook formatting (optional — install system-wide)
+# pandoc is a system binary: apt install pandoc
