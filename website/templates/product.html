@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} — Publishing Empire{% endblock %}
+{% block description %}{{ product.description[:155] }}{% endblock %}
+
+{% block content %}
+<div class="product-detail">
+  <!-- COVER -->
+  <div class="detail-cover">
+    {% if product.cover_url %}
+      <img src="{{ product.cover_url }}" alt="{{ product.title }}">
+    {% else %}
+      <div class="card-cover-placeholder" style="height:100%; font-size:1.3rem;">{{ product.title }}</div>
+    {% endif %}
+  </div>
+
+  <!-- INFO -->
+  <div>
+    <div class="detail-badge">
+      {{ '🎧' if product.type == 'audiobook' else '📖' if product.type == 'ebook' else '🎬' }}
+      {{ product.type | title }} &nbsp;·&nbsp; {{ lang_names.get(product.language, product.language | upper) }}
+    </div>
+    <h1 class="detail-title">{{ product.title }}</h1>
+    {% if product.subtitle %}
+    <p class="detail-subtitle">{{ product.subtitle }}</p>
+    {% endif %}
+
+    <p class="detail-description">{{ product.description }}</p>
+
+    <div class="detail-features">
+      {% if product.type == 'audiobook' %}
+      <div class="feature">
+        <span class="feature-icon">🎧</span>
+        <div class="feature-text"><strong>Audiobook</strong>Full narration, downloadable MP3</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">📥</span>
+        <div class="feature-text"><strong>Instant Access</strong>Download after purchase</div>
+      </div>
+      {% elif product.type == 'ebook' %}
+      <div class="feature">
+        <span class="feature-icon">📖</span>
+        <div class="feature-text"><strong>EPUB + PDF</strong>Works on any device</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🔖</span>
+        <div class="feature-text"><strong>DRM-Free</strong>Keep it forever</div>
+      </div>
+      {% else %}
+      <div class="feature">
+        <span class="feature-icon">🎬</span>
+        <div class="feature-text"><strong>HD Video</strong>Download & keep</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">📱</span>
+        <div class="feature-text"><strong>All Devices</strong>Watch anywhere</div>
+      </div>
+      {% endif %}
+      <div class="feature">
+        <span class="feature-icon">🌍</span>
+        <div class="feature-text"><strong>{{ lang_names.get(product.language, 'Multi-language') }}</strong>International edition</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-text"><strong>48hr Link</strong>Secure download window</div>
+      </div>
+    </div>
+
+    <!-- CHECKOUT BOX -->
+    <div class="checkout-box">
+      <div class="checkout-price">${{ "%.2f"|format(product.price_usd) }}</div>
+      <div class="checkout-note">One-time purchase · Instant download · USD</div>
+
+      <form action="/checkout/{{ product.id }}" method="post">
+        <button type="submit" class="btn-checkout">
+          🔒 &nbsp; Buy Now — Secure Checkout
+        </button>
+      </form>
+
+      <div class="trust-badges">
+        <span class="trust-badge">✅ Stripe Secured</span>
+        <span class="trust-badge">📧 Instant Delivery</span>
+        <span class="trust-badge">🔒 256-bit SSL</span>
+      </div>
+    </div>
+
+    {% if product.keywords %}
+    <div style="margin-top:2rem;">
+      {% for kw in product.keywords[:8] %}
+      <span style="display:inline-block; background:var(--bg3); border:1px solid var(--border);
+                   color:var(--muted); font-size:0.78rem; padding:0.25rem 0.65rem;
+                   border-radius:100px; margin:0.25rem;">{{ kw }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

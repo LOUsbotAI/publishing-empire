@@ -70,6 +70,35 @@ def init_db():
             impressions INTEGER DEFAULT 0,
             clicks      INTEGER DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS stripe_products (
+            product_id          INTEGER PRIMARY KEY REFERENCES products(id),
+            stripe_product_id   TEXT NOT NULL,
+            stripe_price_id     TEXT NOT NULL,
+            price_usd           REAL,
+            active              INTEGER DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS download_tokens (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            token           TEXT UNIQUE NOT NULL,
+            product_id      INTEGER REFERENCES products(id),
+            customer_email  TEXT,
+            expires_at      TEXT NOT NULL,
+            used            INTEGER DEFAULT 0,
+            created_at      TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS orders (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            stripe_session_id   TEXT UNIQUE,
+            product_id          INTEGER REFERENCES products(id),
+            customer_email      TEXT,
+            amount_usd          REAL,
+            status              TEXT DEFAULT 'pending',
+            download_token      TEXT,
+            created_at          TEXT DEFAULT (datetime('now'))
+        );
         """)
 
 

@@ -25,7 +25,7 @@ log = logging.getLogger("orchestrator")
 
 import config
 import database as db
-from agents import finance_agent
+from agents import finance_agent, stripe_agent, heartbeat_agent
 from pipelines import audiobook_pipeline, ebook_pipeline, video_pipeline
 from agents import research_agent
 
@@ -142,6 +142,12 @@ def run_forever():
 
     # Revenue sync — every day at 23:00 UTC
     scheduler.add_job(revenue_sync_and_report, CronTrigger(hour=23))
+
+    # Stripe product sync — every hour (publish new products to Stripe automatically)
+    scheduler.add_job(stripe_agent.sync_all_products_to_stripe, CronTrigger(minute=0))
+
+    # Heartbeat — every 5 minutes
+    scheduler.add_job(heartbeat_agent.run_heartbeat, "interval", minutes=5)
 
     log.info("=" * 60)
     log.info("Publishing Empire is LIVE — running autonomously")

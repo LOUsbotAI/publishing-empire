@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Store — Publishing Empire{% endblock %}
+
+{% block content %}
+<section style="padding: clamp(3rem,6vw,5rem) clamp(1rem,5vw,4rem);">
+  <div class="section-header">
+    <div class="section-tag">✦ {{ total }} Title{{ 's' if total != 1 else '' }} Available</div>
+    <h2>The Full Catalogue</h2>
+    <p>Audiobooks · Ebooks · Video Courses — in multiple languages</p>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn {% if not active_type %}active{% endif %}"
+            onclick="filter('')">All</button>
+    <button class="filter-btn {% if active_type=='audiobook' %}active{% endif %}"
+            onclick="filter('audiobook')">🎧 Audiobooks</button>
+    <button class="filter-btn {% if active_type=='ebook' %}active{% endif %}"
+            onclick="filter('ebook')">📖 Ebooks</button>
+    <button class="filter-btn {% if active_type=='video_long' or active_type=='video_short' %}active{% endif %}"
+            onclick="filter('video')">🎬 Video</button>
+  </div>
+
+  {% for lang_group in languages %}
+  {% if products_by_lang[lang_group] %}
+  <div style="margin-bottom:3rem;">
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
+      <h3 style="font-family:'Playfair Display',serif; font-size:1.3rem;">{{ lang_names[lang_group] }}</h3>
+      <span style="color:var(--muted); font-size:0.85rem;">{{ products_by_lang[lang_group]|length }} title{{ 's' if products_by_lang[lang_group]|length != 1 else '' }}</span>
+    </div>
+    <div class="product-grid">
+      {% for p in products_by_lang[lang_group] %}
+      <a class="product-card" href="/product/{{ p.id }}">
+        <div class="card-cover">
+          {% if p.cover_url %}
+            <img src="{{ p.cover_url }}" alt="{{ p.title }}" loading="lazy">
+          {% else %}
+            <div class="card-cover-placeholder">{{ p.title }}</div>
+          {% endif %}
+          <span class="card-badge">{{ p.type | upper }}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-niche">{{ p.niche or 'Premium Content' }}</div>
+          <div class="card-title">{{ p.title }}</div>
+          <div class="card-desc">{{ p.description }}</div>
+          <div class="card-footer">
+            <div class="card-price">${{ "%.2f"|format(p.price_usd) }}<span> USD</span></div>
+            <button class="btn-buy" onclick="event.preventDefault(); window.location='/product/{{ p.id }}'">Get It →</button>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if not products_by_lang.values()|sum(start=[]) %}
+  <div class="empty-state">
+    <h3>No titles yet in this category</h3>
+    <p>The system is producing new content — check back soon.</p>
+  </div>
+  {% endif %}
+</section>
+
+<script>
+function filter(type) {
+  const url = new URL(window.location);
+  if (type) url.searchParams.set('type', type);
+  else url.searchParams.delete('type');
+  window.location = url.toString();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Publishing Empire — Premium Digital Content{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-badge">🌍 International · {{ total_products }}+ Titles Available</div>
+  <h1>Words That<br>Move the World</h1>
+  <p>Premium audiobooks, ebooks and video courses in {{ total_languages }}+ languages — produced by AI, curated for humans.</p>
+  <a href="/store" class="btn-buy" style="display:inline-block; padding:1rem 2.5rem; font-size:1.1rem; border-radius:12px; text-decoration:none;">
+    Browse the Store →
+  </a>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">{{ total_products }}</span>
+      <div class="stat-label">Titles Published</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">{{ total_languages }}+</span>
+      <div class="stat-label">Languages</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">{{ total_niches }}+</span>
+      <div class="stat-label">Topics & Niches</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">48hr</span>
+      <div class="stat-label">Download Access</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED PRODUCTS -->
+<section style="background: var(--bg2);">
+  <div class="section-header">
+    <div class="section-tag">✦ New Releases</div>
+    <h2>Latest Titles</h2>
+    <p>Fresh content added automatically every week</p>
+  </div>
+  <div class="product-grid container">
+    {% if products %}
+      {% for p in products %}
+      <a class="product-card" href="/product/{{ p.id }}">
+        <div class="card-cover">
+          {% if p.cover_url %}
+            <img src="{{ p.cover_url }}" alt="{{ p.title }}" loading="lazy">
+          {% else %}
+            <div class="card-cover-placeholder">{{ p.title }}</div>
+          {% endif %}
+          <span class="card-badge">{{ p.type | upper }}</span>
+          <span class="card-lang">{{ p.language | upper }}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-niche">{{ p.niche or 'Premium Content' }}</div>
+          <div class="card-title">{{ p.title }}</div>
+          <div class="card-desc">{{ p.description }}</div>
+          <div class="card-footer">
+            <div class="card-price">${{ "%.2f"|format(p.price_usd) }}<span> USD</span></div>
+            <button class="btn-buy" onclick="event.preventDefault(); window.location='/product/{{ p.id }}'">Get It →</button>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <h3>Building the catalogue…</h3>
+        <p>New titles are being produced. Check back soon.</p>
+      </div>
+    {% endif %}
+  </div>
+  {% if total_products > 6 %}
+  <div style="text-align:center; margin-top:3rem;">
+    <a href="/store" class="btn-buy" style="display:inline-block; padding:0.85rem 2rem; border-radius:10px; text-decoration:none; font-size:0.95rem;">
+      View All {{ total_products }} Titles →
+    </a>
+  </div>
+  {% endif %}
+</section>
+
+<!-- WHY US -->
+<section>
+  <div class="section-header">
+    <div class="section-tag">✦ Why Choose Us</div>
+    <h2>Built Different</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1.5rem; max-width:1000px; margin:0 auto;">
+    {% for item in [
+      ('🌐', 'International', 'Content in 6+ languages — reach readers worldwide.'),
+      ('⚡', 'Instant Delivery', 'Download link sent immediately after purchase.'),
+      ('🔒', 'Secure Checkout', 'Stripe-powered — your card data never touches us.'),
+      ('📱', 'All Devices', 'Read or listen on phone, tablet, desktop or e-reader.')
+    ] %}
+    <div class="feature" style="flex-direction:column; align-items:flex-start; gap:0.75rem; padding:1.75rem;">
+      <div style="font-size:2rem;">{{ item[0] }}</div>
+      <div>
+        <strong style="display:block; margin-bottom:0.3rem;">{{ item[1] }}</strong>
+        <span style="font-size:0.88rem; color:var(--muted);">{{ item[2] }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

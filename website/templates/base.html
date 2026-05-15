@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Publishing Empire{% endblock %}</title>
+  <meta name="description" content="{% block description %}Premium audiobooks, ebooks and video courses — produced and delivered worldwide.{% endblock %}">
+  <link rel="stylesheet" href="/static/css/store.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+  <nav>
+    <a class="nav-logo" href="/">Publishing Empire</a>
+    <div class="nav-links">
+      <a href="/store">Store</a>
+      <a href="/store?type=audiobook">Audiobooks</a>
+      <a href="/store?type=ebook">Ebooks</a>
+      <a href="/store?type=video">Video</a>
+      <a href="/store" class="nav-cta">Browse All</a>
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <footer>
+    <span class="footer-logo">Publishing Empire</span>
+    <p>Premium digital content — delivered worldwide</p>
+    <p style="margin-top:1rem;">
+      <a href="/store">Store</a> &nbsp;·&nbsp;
+      <a href="/terms">Terms</a> &nbsp;·&nbsp;
+      <a href="/privacy">Privacy</a>
+    </p>
+    <p style="margin-top:1.5rem; font-size:0.78rem; opacity:0.5;">
+      Payments secured by Stripe &nbsp;·&nbsp; All sales final on digital goods
+    </p>
+  </footer>
+
+  <script src="/static/js/store.js"></script>
+</body>
+</html>

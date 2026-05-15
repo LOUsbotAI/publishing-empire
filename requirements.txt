@@ -1,22 +1,31 @@
+# Core
 anthropic>=0.40.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 apscheduler>=3.10.0
 
-# Audio
-# elevenlabs>=1.0.0  # or install via: pip install elevenlabs
+# Web storefront + payments
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+jinja2>=3.1.0
+python-multipart>=0.0.9
+aiofiles>=23.0.0
 
 # Social / Marketing
 tweepy>=4.14.0
 
-# Video (optional — for advanced video assembly)
+# Audio (install: pip install elevenlabs)
+# elevenlabs>=1.0.0
+
+# Video assembly (optional)
 # moviepy>=1.0.3
 
-# Browser automation for KDP/ACX uploads (optional)
+# KDP/ACX browser automation (optional)
 # playwright>=1.40.0
+# Install after: playwright install chromium
 
-# Google Gemini (for cover art generation)
+# Cover art via Google Gemini (optional)
 # google-generativeai>=0.8.0
 
-# Ebook formatting (optional — install system-wide)
-# pandoc is a system binary: apt install pandoc
+# Ebook formatting (system binary)
+# apt install pandoc
