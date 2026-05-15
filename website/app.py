@@ -157,13 +157,37 @@ async def product_page(request: Request, product_id: int):
 
 @app.post("/checkout/{product_id}")
 async def checkout(request: Request, product_id: int):
-    """Create a Stripe checkout session and redirect."""
+    """
+    Create a checkout session — prefers LemonSqueezy (direct bank payout),
+    falls back to Stripe if LemonSqueezy is not configured.
+    """
     db.init_db()
     product = _get_product(product_id)
     if not product:
         raise HTTPException(404, "Product not found")
 
     base_url = str(request.base_url).rstrip("/")
+
+    # Try LemonSqueezy first (pays directly to your bank — preferred)
+    ls_key = os.getenv("LEMONSQUEEZY_API_KEY", "")
+    if ls_key:
+        try:
+            from agents import lemonsqueezy_agent
+            with db.conn() as c:
+                ls = c.execute(
+                    "SELECT ls_variant_id FROM ls_products WHERE product_id=? AND active=1",
+                    (product_id,)
+                ).fetchone()
+            if ls:
+                checkout_url = lemonsqueezy_agent.get_checkout_url(
+                    ls["ls_variant_id"],
+                    custom_data={"product_id": str(product_id)}
+                )
+                return RedirectResponse(checkout_url, status_code=303)
+        except Exception as e:
+            log.warning("LemonSqueezy checkout failed, falling back to Stripe: %s", e)
+
+    # Stripe fallback
     try:
         checkout_url = stripe_agent.create_checkout_session(
             product_id=product_id,
@@ -172,7 +196,7 @@ async def checkout(request: Request, product_id: int):
         )
         return RedirectResponse(checkout_url, status_code=303)
     except Exception as e:
-        log.error("Checkout failed for product %d: %s", product_id, e)
+        log.error("All checkout methods failed for product %d: %s", product_id, e)
         raise HTTPException(500, "Checkout unavailable — please try again")
 
 
@@ -225,6 +249,15 @@ async def download(token: str):
         filename=file_path.name,
         media_type="application/octet-stream",
     )
+
+
+@app.post("/webhook/lemonsqueezy")
+async def ls_webhook(request: Request):
+    """LemonSqueezy webhook — order paid → issue download token."""
+    payload = await request.json()
+    from agents import lemonsqueezy_agent
+    lemonsqueezy_agent.handle_webhook(payload)
+    return JSONResponse({"status": "ok"})
 
 
 @app.post("/webhook/stripe")

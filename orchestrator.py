@@ -26,7 +26,7 @@ log = logging.getLogger("orchestrator")
 
 import config
 import database as db
-from agents import finance_agent, stripe_agent, heartbeat_agent, payout_agent
+from agents import finance_agent, stripe_agent, heartbeat_agent, payout_agent, revenue_aggregator
 from pipelines import audiobook_pipeline, ebook_pipeline, video_pipeline
 from agents import research_agent
 
@@ -159,6 +159,9 @@ def run_forever():
 
     # Failed payout alert — daily at 07:00 UTC (catches bank account issues immediately)
     scheduler.add_job(payout_agent.check_for_failed_payouts, CronTrigger(hour=7))
+
+    # Cross-platform revenue sync — every 6 hours (Gumroad, LemonSqueezy APIs + CSV imports)
+    scheduler.add_job(revenue_aggregator.full_revenue_report, "interval", hours=6)
 
     log.info("=" * 60)
     log.info("Publishing Empire is LIVE — running autonomously")

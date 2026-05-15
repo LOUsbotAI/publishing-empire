@@ -109,6 +109,27 @@ def init_db():
             initiated_at        TEXT,
             eta                 TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS ls_products (
+            product_id      INTEGER PRIMARY KEY REFERENCES products(id),
+            ls_product_id   TEXT NOT NULL,
+            ls_variant_id   TEXT NOT NULL,
+            price_usd       REAL,
+            active          INTEGER DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS platform_sales (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform            TEXT NOT NULL,
+            platform_sale_id    TEXT UNIQUE,
+            amount_usd          REAL,
+            currency            TEXT DEFAULT 'USD',
+            product_name        TEXT,
+            customer_email      TEXT,
+            sale_date           TEXT,
+            notes               TEXT,
+            recorded_at         TEXT DEFAULT (datetime('now'))
+        );
         """)
 
 
