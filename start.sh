@@ -30,6 +30,12 @@ else
   echo "⚠️  CF_TUNNEL_TOKEN not set — store only accessible locally"
 fi
 
+# Start Termux bridge (connects to existing Node.js system on port 8001)
+echo "🔗 Starting Termux bridge on port 8001..."
+python3 termux_bridge.py &
+BRIDGE_PID=$!
+echo "   PID: $BRIDGE_PID"
+
 # Start content orchestrator (background)
 echo "🤖 Starting content orchestrator..."
 python3 orchestrator.py &
@@ -45,5 +51,5 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "  Press Ctrl+C to stop all processes"
 
-trap "echo ''; echo 'Stopping...'; kill $WEB_PID $ORC_PID ${CF_PID:-} 2>/dev/null; exit 0" SIGINT SIGTERM
+trap "echo ''; echo 'Stopping...'; kill $WEB_PID $ORC_PID $BRIDGE_PID ${CF_PID:-} 2>/dev/null; exit 0" SIGINT SIGTERM
 wait

@@ -118,6 +118,25 @@ def init_db():
             active          INTEGER DEFAULT 1
         );
 
+        CREATE TABLE IF NOT EXISTS expenses (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity          TEXT DEFAULT 'lucorp',
+            description     TEXT,
+            amount_aud      REAL,
+            category        TEXT,
+            gst_credit      REAL DEFAULT 0,
+            gst_inclusive   INTEGER DEFAULT 0,
+            recorded_at     TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS bas_records (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity          TEXT,
+            quarter         TEXT UNIQUE,
+            data_json       TEXT,
+            generated_at    TEXT DEFAULT (datetime('now'))
+        );
+
         CREATE TABLE IF NOT EXISTS email_sequences (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             brief_title TEXT,

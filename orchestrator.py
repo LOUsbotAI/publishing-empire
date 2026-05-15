@@ -26,7 +26,7 @@ log = logging.getLogger("orchestrator")
 
 import config
 import database as db
-from agents import finance_agent, stripe_agent, heartbeat_agent, payout_agent, revenue_aggregator
+from agents import finance_agent, stripe_agent, heartbeat_agent, payout_agent, revenue_aggregator, tax_agent
 from pipelines import audiobook_pipeline, ebook_pipeline, video_pipeline, full_book_pipeline
 from agents import research_agent
 
@@ -163,8 +163,21 @@ def run_forever():
     # Failed payout alert — daily at 07:00 UTC (catches bank account issues immediately)
     scheduler.add_job(payout_agent.check_for_failed_payouts, CronTrigger(hour=7))
 
-    # Cross-platform revenue sync — every 6 hours (Gumroad, LemonSqueezy APIs + CSV imports)
+    # Cross-platform revenue sync — every 6 hours
     scheduler.add_job(revenue_aggregator.full_revenue_report, "interval", hours=6)
+
+    # Quarterly BAS (Australian GST return) — 1st of month after quarter end
+    # Q1 (Jul-Sep) → 1 Oct | Q2 (Oct-Dec) → 1 Jan | Q3 (Jan-Mar) → 1 Apr | Q4 (Apr-Jun) → 1 Jul
+    scheduler.add_job(
+        tax_agent.generate_bas,
+        CronTrigger(month="1,4,7,10", day=1, hour=9),
+        kwargs={"entity": "lucorp"}
+    )
+    # Annual tax summary — 1 July each year (start of new AU financial year)
+    scheduler.add_job(
+        tax_agent.annual_tax_summary,
+        CronTrigger(month=7, day=1, hour=10)
+    )
 
     log.info("=" * 60)
     log.info("Publishing Empire is LIVE — running autonomously")
