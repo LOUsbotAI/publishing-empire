@@ -27,7 +27,7 @@ log = logging.getLogger("orchestrator")
 import config
 import database as db
 from agents import finance_agent, stripe_agent, heartbeat_agent, payout_agent, revenue_aggregator
-from pipelines import audiobook_pipeline, ebook_pipeline, video_pipeline
+from pipelines import audiobook_pipeline, ebook_pipeline, video_pipeline, full_book_pipeline
 from agents import research_agent
 
 
@@ -45,16 +45,16 @@ def research_and_queue():
                 brief = research_agent.generate_book_brief(opp)
                 # Queue the primary language
                 db.create_job(
-                    pipeline=opp.get("type", "ebook"),
+                    pipeline="both",  # produce ebook + audiobook, launch everywhere
                     niche=niche,
                     language=config.PRIMARY_LANGUAGE,
                     meta=brief,
                 )
-                # Queue translations for international reach
+                # Queue the same book in every additional language automatically
                 for lang in config.ADDITIONAL_LANGUAGES:
                     lang_brief = dict(brief, language=lang)
                     db.create_job(
-                        pipeline=opp.get("type", "ebook"),
+                        pipeline="both",
                         niche=niche,
                         language=lang,
                         meta=lang_brief,
@@ -76,16 +76,19 @@ def process_pending_jobs(max_jobs: int = 5):
 
         log.info("Running job %d: %s (%s/%s)", job["id"], pipeline, niche, language)
         try:
-            if pipeline == "audiobook":
-                audiobook_pipeline.run(niche, language, brief=meta)
+            # All content jobs go through the full pipeline:
+            # research → write → produce → launch on ALL platforms → full marketing
+            if pipeline in ("audiobook",):
+                full_book_pipeline.run(niche, language, brief=meta, content_type="audiobook")
             elif pipeline in ("ebook", "short_read"):
-                ebook_pipeline.run(niche, language, brief=meta)
-            elif pipeline == "video_series":
+                full_book_pipeline.run(niche, language, brief=meta, content_type="ebook")
+            elif pipeline in ("video_series", "video_long", "video_short"):
                 if meta:
                     video_pipeline.run_long_form(meta, language)
                     video_pipeline.run_short_form_batch(meta, language)
             else:
-                ebook_pipeline.run(niche, language, brief=meta)
+                # Default: produce both ebook + audiobook, launch everywhere
+                full_book_pipeline.run(niche, language, brief=meta, content_type="both")
         except Exception as e:
             log.error("Job %d failed: %s", job["id"], e)
 

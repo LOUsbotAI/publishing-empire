@@ -118,6 +118,16 @@ def init_db():
             active          INTEGER DEFAULT 1
         );
 
+        CREATE TABLE IF NOT EXISTS email_sequences (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            brief_title TEXT,
+            send_day    INTEGER,
+            subject     TEXT,
+            html_body   TEXT,
+            sent        INTEGER DEFAULT 0,
+            created_at  TEXT DEFAULT (datetime('now'))
+        );
+
         CREATE TABLE IF NOT EXISTS platform_sales (
             id                  INTEGER PRIMARY KEY AUTOINCREMENT,
             platform            TEXT NOT NULL,
@@ -131,6 +141,15 @@ def init_db():
             recorded_at         TEXT DEFAULT (datetime('now'))
         );
         """)
+
+
+def update_job_by_product(product_id: int, status: str):
+    with conn() as c:
+        c.execute(
+            """UPDATE jobs SET status=?, updated_at=datetime('now')
+               WHERE id=(SELECT job_id FROM products WHERE id=?)""",
+            (status, product_id)
+        )
 
 
 def create_job(pipeline: str, niche: str, language: str = "en", meta: dict = None) -> int:
