@@ -314,6 +314,35 @@ def watch_and_import_reports():
 
 # ─── UNIFIED REVENUE SUMMARY ─────────────────────────────────────────────────
 
+def sync_cloudflare_edge() -> dict:
+    """Pull revenue from the live Cloudflare edge Worker."""
+    try:
+        from agents import cloudflare_agent
+        data = cloudflare_agent.revenue_summary()
+        if not data:
+            return {"platform": "cloudflare_edge", "status": "no_data"}
+        by_currency = data.get("revenue_by_currency", [])
+        total_usd = 0.0
+        for row in by_currency:
+            cents = row.get("total_cents", 0) or 0
+            currency = (row.get("currency") or "aud").upper()
+            if currency == "AUD":
+                total_usd += cents / 100 * 0.64
+            else:
+                total_usd += cents / 100
+        log.info("CF edge revenue: %d currency rows, ~$%.2f USD", len(by_currency), total_usd)
+        return {
+            "platform": "cloudflare_edge",
+            "total_usd": round(total_usd, 2),
+            "by_currency": by_currency,
+            "customers": data.get("total_customers", 0),
+            "milestones": len(data.get("milestones", [])),
+        }
+    except Exception as e:
+        log.error("CF edge sync failed: %s", e)
+        return {"platform": "cloudflare_edge", "status": "error", "error": str(e)}
+
+
 def full_revenue_report() -> dict:
     """Aggregate revenue from every source — APIs + imported CSVs."""
     # Sync live API platforms
@@ -322,6 +351,8 @@ def full_revenue_report() -> dict:
         api_results.append(sync_gumroad())
     if os.getenv("LEMONSQUEEZY_API_KEY"):
         api_results.append(sync_lemonsqueezy())
+    if os.getenv("CF_WORKER_URL"):
+        api_results.append(sync_cloudflare_edge())
 
     # Import any CSV reports dropped in reports/
     csv_results = watch_and_import_reports()

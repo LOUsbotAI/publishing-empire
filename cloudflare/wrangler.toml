@@ -1,0 +1,16 @@
+name = "silent-union-202e"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# Live D1 — lousta_transactions (Newark/ENAM)
+[[d1_databases]]
+binding       = "DB"
+database_name = "lousta_transactions"
+database_id   = "c8712cf4-abc9-46d2-8458-d7cbd027eafd"
+
+# Secrets are NOT stored here. Set them via:
+#   wrangler secret put STRIPE_WEBHOOK_SECRET
+#   wrangler secret put ADMIN_KEY
+[observability]
+enabled = true
