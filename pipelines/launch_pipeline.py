@@ -8,6 +8,8 @@ When a book is ready this does ALL of the following in parallel:
 DISTRIBUTION
   ✓ Website store (LemonSqueezy checkout + product page)
   ✓ Gumroad (direct sales, weekly bank payout)
+  ✓ Payhip (direct sales, weekly payout)
+  ✓ Draft2Digital → Apple Books, B&N, Kobo, Scribd, OverDrive, 40+ stores
   ✓ Amazon KDP (ebook, browser automation)
   ✓ ACX / Audible (audiobook, browser automation)
   ✓ Google Play Books (partner API)
@@ -23,6 +25,7 @@ MARKETING
   ✓ 5-email drip sequence (automated follow-up)
   ✓ SEO metadata pushed to all platforms
   ✓ Amazon A+ content description
+  ✓ Telegram notification on launch
 """
 import json
 import logging
@@ -216,6 +219,56 @@ def _launch_shorts(brief: dict, language: str) -> dict:
         return {"platform": "shorts", "status": "failed", "error": str(e)}
 
 
+def _launch_draft2digital(brief: dict, epub_path: Path, cover_path: Path) -> dict:
+    """Draft2Digital → Apple Books, B&N, Kobo, Scribd, OverDrive, Tolino, 40+ stores."""
+    if not (os.getenv("D2D_EMAIL") and os.getenv("D2D_PASSWORD")):
+        return {"platform": "draft2digital", "status": "not_configured",
+                "note": "Set D2D_EMAIL + D2D_PASSWORD in .env"}
+    if not (epub_path and epub_path.exists()):
+        return {"platform": "draft2digital", "status": "no_epub"}
+    try:
+        from agents import draft2digital_agent
+        result = draft2digital_agent.upload_ebook(
+            epub_path=epub_path,
+            title=brief["title"],
+            author=brief.get("author", "Lousta Corp"),
+            description=brief.get("back_cover_blurb", ""),
+            keywords=brief.get("keywords", []),
+            price_usd=float(brief.get("suggested_price_usd", 4.99)),
+            language=brief.get("language", "en"),
+        )
+        log.info("✅ Draft2Digital: %s channels, ID %s",
+                 result.get("channels", "?"), result.get("book_id", "?"))
+        return {"platform": "draft2digital", **result}
+    except Exception as e:
+        log.error("❌ Draft2Digital failed: %s", e)
+        return {"platform": "draft2digital", "status": "failed", "error": str(e)}
+
+
+def _launch_payhip(brief: dict, file_path: Path, cover_path: Path) -> dict:
+    """Payhip direct sales — weekly payout to PayPal/bank."""
+    if not (os.getenv("PAYHIP_EMAIL") and os.getenv("PAYHIP_PASSWORD")):
+        return {"platform": "payhip", "status": "not_configured",
+                "note": "Set PAYHIP_EMAIL + PAYHIP_PASSWORD in .env"}
+    if not (file_path and file_path.exists()):
+        return {"platform": "payhip", "status": "no_file"}
+    try:
+        from agents import payhip_agent
+        result = payhip_agent.upload_product(
+            file_path=file_path,
+            title=brief["title"],
+            description=brief.get("back_cover_blurb", ""),
+            price_usd=float(brief.get("suggested_price_usd", 4.99)),
+            cover_path=cover_path,
+            tags=brief.get("keywords", [])[:5],
+        )
+        log.info("✅ Payhip: %s → %s", brief["title"], result.get("url", "?"))
+        return {"platform": "payhip", **result}
+    except Exception as e:
+        log.error("❌ Payhip failed: %s", e)
+        return {"platform": "payhip", "status": "failed", "error": str(e)}
+
+
 # ─── MARKETING LAUNCHERS ─────────────────────────────────────────────────────
 
 def _run_full_marketing(brief: dict, product_url: str, product_id: int) -> dict:
@@ -386,6 +439,16 @@ def launch_everywhere(brief: dict, product_id: int,
                 _launch_findaway, brief, audio_dir
             )
 
+        if os.getenv("D2D_EMAIL") and epub_path:
+            tasks["draft2digital"] = ex.submit(
+                _launch_draft2digital, brief, epub_path, cover_path
+            )
+
+        if os.getenv("PAYHIP_EMAIL") and file_for_gumroad:
+            tasks["payhip"] = ex.submit(
+                _launch_payhip, brief, file_for_gumroad, cover_path
+            )
+
         if config.YOUTUBE_REFRESH_TOKEN:
             tasks["youtube"] = ex.submit(_launch_youtube, brief, language,
                                          epub_path.parent if epub_path else Path("."))
@@ -430,4 +493,16 @@ def launch_everywhere(brief: dict, product_id: int,
     results["primary_url"] = primary_url
     results["live_on"] = ok
     results["timestamp"] = datetime.utcnow().isoformat()
+
+    # ── Telegram notification ─────────────────────────────────────────────
+    try:
+        from agents import telegram_agent
+        telegram_agent.send_book_launch_notification(
+            brief=brief,
+            platforms=ok,
+            price_usd=float(brief.get("suggested_price_usd", 4.99)),
+        )
+    except Exception:
+        pass
+
     return results
