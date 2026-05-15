@@ -127,12 +127,38 @@ def produce_daily_videos():
 
 # ─── SCHEDULES ───────────────────────────────────────────────────────────────
 
+def startup_health_check():
+    """Validate critical API keys before the scheduler starts. Raises on failure."""
+    import anthropic
+    try:
+        client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+        client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=5,
+            messages=[{"role": "user", "content": "ping"}],
+        )
+        log.info("✓ Anthropic API — live")
+    except Exception as e:
+        raise RuntimeError(
+            f"Anthropic API check failed: {e}\n"
+            "Run: python3 scripts/validate_content.py"
+        ) from e
+
+    if not config.ELEVENLABS_API_KEY:
+        log.warning("⚠ ELEVENLABS_API_KEY not set — audiobooks will be silent stubs")
+    if not config.GEMINI_API_KEY:
+        log.warning("⚠ GEMINI_API_KEY not set — Gemini features disabled")
+    if not config.STRIPE_SECRET_KEY:
+        log.warning("⚠ STRIPE_SECRET_KEY not set — Stripe sync disabled")
+
+
 def run_forever():
     """Main loop — runs the empire indefinitely."""
     from apscheduler.schedulers.blocking import BlockingScheduler  # type: ignore
     from apscheduler.triggers.cron import CronTrigger
 
     db.init_db()
+    startup_health_check()
     scheduler = BlockingScheduler(timezone="UTC")
 
     # Research new books — twice a week (Mon + Thu at 06:00 UTC)
