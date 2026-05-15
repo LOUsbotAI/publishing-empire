@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Publishing Empire{% endblock %}
+
+{% block content %}
+<div style="max-width:780px; margin:0 auto; padding:clamp(3rem,6vw,6rem) clamp(1rem,5vw,2rem);">
+  <h1 style="font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:700; margin-bottom:0.5rem;">{{ page_title }}</h1>
+  <p style="color:var(--muted); margin-bottom:3rem; font-size:0.9rem;">Last updated: {{ last_updated }}</p>
+  <div style="line-height:1.9; color:#c8c6d8;" class="legal-body">
+    {{ body | safe }}
+  </div>
+</div>
+<style>
+.legal-body h2 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--text); margin:2.5rem 0 0.75rem; }
+.legal-body p  { margin-bottom:1rem; }
+.legal-body ul { padding-left:1.5rem; margin-bottom:1rem; }
+.legal-body li { margin-bottom:0.4rem; }
+.legal-body a  { color:var(--gold); }
+</style>
+{% endblock %}

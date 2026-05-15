@@ -99,6 +99,16 @@ def init_db():
             download_token      TEXT,
             created_at          TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS payout_log (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            stripe_payout_id    TEXT UNIQUE,
+            amount_usd          REAL,
+            currency            TEXT DEFAULT 'usd',
+            status              TEXT,
+            initiated_at        TEXT,
+            eta                 TEXT
+        );
         """)
 
 

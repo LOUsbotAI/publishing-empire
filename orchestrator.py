@@ -8,6 +8,7 @@ Usage:
     python orchestrator.py once     # run one full cycle now (testing)
     python orchestrator.py report   # print revenue report
 """
+import os
 import sys
 import logging
 import json
@@ -25,7 +26,7 @@ log = logging.getLogger("orchestrator")
 
 import config
 import database as db
-from agents import finance_agent, stripe_agent, heartbeat_agent
+from agents import finance_agent, stripe_agent, heartbeat_agent, payout_agent
 from pipelines import audiobook_pipeline, ebook_pipeline, video_pipeline
 from agents import research_agent
 
@@ -148,6 +149,16 @@ def run_forever():
 
     # Heartbeat — every 5 minutes
     scheduler.add_job(heartbeat_agent.run_heartbeat, "interval", minutes=5)
+
+    # Payout threshold check — every 6 hours (pays out when balance > $50)
+    scheduler.add_job(
+        payout_agent.check_and_payout_threshold,
+        "interval", hours=6,
+        kwargs={"threshold_usd": float(os.getenv("PAYOUT_THRESHOLD_USD", "50"))}
+    )
+
+    # Failed payout alert — daily at 07:00 UTC (catches bank account issues immediately)
+    scheduler.add_job(payout_agent.check_for_failed_payouts, CronTrigger(hour=7))
 
     log.info("=" * 60)
     log.info("Publishing Empire is LIVE — running autonomously")

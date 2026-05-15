@@ -278,13 +278,92 @@ async def stripe_webhook(
 
 @app.get("/admin/report")
 async def admin_report(request: Request, key: str = ""):
-    """Simple admin endpoint — protect with ADMIN_KEY env var."""
     admin_key = os.getenv("ADMIN_KEY", "")
     if admin_key and key != admin_key:
         raise HTTPException(403, "Forbidden")
     db.init_db()
-    report = stripe_agent.transaction_monitor_report()
+    from agents import payout_agent
+    report = {
+        "transactions": stripe_agent.transaction_monitor_report(),
+        "financials": payout_agent.full_financial_status(),
+    }
     return JSONResponse(report)
+
+
+@app.post("/admin/payout")
+async def admin_payout(request: Request, key: str = ""):
+    """Manually trigger a payout — protected endpoint."""
+    admin_key = os.getenv("ADMIN_KEY", "")
+    if admin_key and key != admin_key:
+        raise HTTPException(403, "Forbidden")
+    from agents import payout_agent
+    result = payout_agent.trigger_payout()
+    return JSONResponse(result)
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms(request: Request):
+    return templates.TemplateResponse("legal.html", {
+        "request": request,
+        "page_title": "Terms of Service",
+        "last_updated": "2025",
+        "body": """
+        <h2>1. Digital Products</h2>
+        <p>Publishing Empire sells digital content including audiobooks, ebooks, and video courses.
+        All products are delivered electronically via a secure download link valid for 48 hours after purchase.</p>
+
+        <h2>2. Payment</h2>
+        <p>All payments are processed securely by Stripe. We accept all major credit and debit cards.
+        Prices are in USD. Your card is charged immediately upon purchase.</p>
+
+        <h2>3. Refund Policy</h2>
+        <p>Due to the digital nature of our products, all sales are final once the download link has been accessed.
+        If you have not yet downloaded your file and experience a technical issue, contact us within 24 hours.</p>
+
+        <h2>4. International Sales</h2>
+        <p>We sell internationally. You are responsible for any applicable taxes or import duties in your jurisdiction.
+        Content is available in multiple languages as described on each product page.</p>
+
+        <h2>5. Intellectual Property</h2>
+        <p>All content sold through this store is for personal use only. Redistribution, resale, or reproduction
+        in any form is prohibited without written permission.</p>
+
+        <h2>6. Contact</h2>
+        <p>For support, email us at support@publishingempire.com</p>
+        """
+    })
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy(request: Request):
+    return templates.TemplateResponse("legal.html", {
+        "request": request,
+        "page_title": "Privacy Policy",
+        "last_updated": "2025",
+        "body": """
+        <h2>What We Collect</h2>
+        <p>When you make a purchase, Stripe collects your payment information. We receive only your email address
+        and order details — we never see or store your card number.</p>
+
+        <h2>How We Use It</h2>
+        <ul>
+          <li>To deliver your purchased download</li>
+          <li>To send purchase confirmation emails</li>
+          <li>To notify you of new content in categories you've purchased from</li>
+        </ul>
+
+        <h2>Third Parties</h2>
+        <p>We use Stripe for payment processing (stripe.com/privacy) and Mailchimp for email (mailchimp.com/privacy).
+        We do not sell your data to any other third parties.</p>
+
+        <h2>Data Retention</h2>
+        <p>Order records are retained for 7 years for tax and accounting purposes.
+        You may request deletion of your personal data at any time by emailing us.</p>
+
+        <h2>Cookies</h2>
+        <p>This site uses only essential session cookies required for the checkout process. No tracking cookies.</p>
+        """
+    })
 
 
 # ─── RUN ─────────────────────────────────────────────────────────────────────
