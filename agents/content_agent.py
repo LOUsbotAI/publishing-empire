@@ -4,12 +4,51 @@ Supports multi-language output for international distribution.
 """
 import json
 import logging
+import re
 from pathlib import Path
 import anthropic
 import config
 
 log = logging.getLogger(__name__)
 _client = None
+
+# Scaffold signatures — any chapter containing these is a generation failure
+_SCAFFOLD_SIGS = [
+    "fallback scaffold content",
+    "wire a valid model/api key",
+    "this is a scaffold chapter",
+    "replace this with your real ai manuscript pipeline",
+    "[industrial expert name]",
+    "[insert date]",
+    "[insert author]",
+    "placeholder content",
+]
+
+AUTHOR_NAME = "Lousta Corp"  # overridden by brief["author"] if set
+
+def _fill_placeholders(text: str, brief: dict) -> str:
+    """Replace any unfilled template placeholders with real values."""
+    author = brief.get("author", AUTHOR_NAME)
+    title  = brief.get("title", "")
+    today  = __import__("datetime").date.today().strftime("%B %Y")
+    replacements = {
+        "[industrial expert name]": author,
+        "[insert author name]": author,
+        "[insert author]": author,
+        "[author name]": author,
+        "[insert date]": today,
+        "[insert publication date]": today,
+        "[publication date]": today,
+        "[insert title]": title,
+        "[title]": title,
+    }
+    for placeholder, value in replacements.items():
+        text = re.sub(re.escape(placeholder), value, text, flags=re.IGNORECASE)
+    return text
+
+def _is_scaffold(text: str) -> bool:
+    low = text.lower()
+    return any(sig in low for sig in _SCAFFOLD_SIGS)
 
 
 def _ai():
@@ -52,7 +91,22 @@ Write the complete chapter now:
         max_tokens=6000,
         messages=[{"role": "user", "content": prompt}]
     )
-    return msg.content[0].text.strip()
+    text = msg.content[0].text.strip()
+    text = _fill_placeholders(text, brief)
+
+    if _is_scaffold(text):
+        raise RuntimeError(
+            f"Chapter {chapter_num} returned scaffold/placeholder text — "
+            "API key may be invalid. Run: python3 scripts/validate_content.py"
+        )
+
+    min_words = 500
+    word_count = len(text.split())
+    if word_count < min_words:
+        log.warning("Chapter %d is very short (%d words) — may be truncated",
+                    chapter_num, word_count)
+
+    return text
 
 
 def write_full_manuscript(brief: dict, output_dir: Path) -> Path:
@@ -79,7 +133,21 @@ def write_full_manuscript(brief: dict, output_dir: Path) -> Path:
             f.write(text)
             f.write("\n\n" + "─" * 60 + "\n\n")
 
-    log.info("Manuscript written: %s", out_path)
+    # Final quality gate — reject entire manuscript if scaffold detected
+    final_text = out_path.read_text(encoding="utf-8")
+    if _is_scaffold(final_text):
+        out_path.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"Manuscript for '{brief['title']}' contains scaffold text — "
+            "blocked from production. Check ANTHROPIC_API_KEY validity."
+        )
+
+    word_count = len(final_text.split())
+    log.info("Manuscript written: %s (%d words)", out_path.name, word_count)
+
+    if word_count < 3000:
+        log.warning("Manuscript is short (%d words) — minimum recommended: 5,000+", word_count)
+
     return out_path
 
 
