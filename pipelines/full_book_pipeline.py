@@ -57,6 +57,19 @@ def run(niche: str = None, language: str = None, brief: dict = None,
     manuscript_path = content_agent.write_full_manuscript(brief, work_dir)
     log.info("✅ Manuscript: %s", manuscript_path.name)
 
+    # ── 2b. AFFILIATE INJECTION ───────────────────────────────────────────────
+    # Inject affiliate links into manuscript before production (+30% revenue)
+    try:
+        from agents import affiliate_agent
+        manuscript_path = affiliate_agent.process_book(
+            manuscript_path=manuscript_path,
+            niche=niche,
+            title=title,
+        )
+        log.info("✅ Affiliate links injected")
+    except Exception as e:
+        log.warning("Affiliate injection skipped: %s", e)
+
     # ── 3. PRODUCE ────────────────────────────────────────────────────────────
     log.info("Step 3/5: Producing assets...")
     db.update_job(job_id, "producing")

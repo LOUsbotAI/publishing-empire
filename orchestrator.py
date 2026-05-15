@@ -138,6 +138,15 @@ def run_forever():
     # Research new books — twice a week (Mon + Thu at 06:00 UTC)
     scheduler.add_job(research_and_queue, CronTrigger(day_of_week="mon,thu", hour=6))
 
+    # Topic aggregator — every 2 hours from all sources (HN, Dev.to, RSS)
+    # Replaces Reddit-based fetching which returns 403
+    from agents import topic_aggregator
+    scheduler.add_job(
+        topic_aggregator.queue_topics_for_production,
+        CronTrigger(hour="*/2"),
+        kwargs={"count": 20},
+    )
+
     # Process pending jobs — every 4 hours
     scheduler.add_job(process_pending_jobs, CronTrigger(hour="*/4"), kwargs={"max_jobs": 3})
 
