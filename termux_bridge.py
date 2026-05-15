@@ -166,6 +166,49 @@ async def health(request: Request):
                          "timestamp": datetime.utcnow().isoformat()})
 
 
+# ── INBOUND: Termux exports → store listings ──────────────────────────────────
+
+@app.post("/bridge/export")
+async def receive_export(request: Request):
+    """
+    Termux pushes a finished book export.json here.
+    Auto-registers it as a live product in the store + LemonSqueezy.
+
+    POST body: export.json contents from ~/lousta-core/output/exports/<slug>/
+    """
+    _auth(request)
+    from agents import pack_importer
+    export_data = await request.json()
+    result = pack_importer.register_pack(export_data)
+    log.info("Export received from Termux: %s → product #%s",
+             export_data.get("title", "?"), result.get("product_id"))
+    return JSONResponse(result)
+
+
+@app.post("/bridge/exports/bulk")
+async def receive_bulk_exports(request: Request):
+    """
+    Bulk push: Termux sends multiple export.json records at once.
+    Body: { "exports": [export_data, ...], "source": "lousta-core" }
+    """
+    _auth(request)
+    from agents import pack_importer
+    body = await request.json()
+    result = pack_importer.bulk_import_from_termux_report(body)
+    log.info("Bulk export received: %d packs, %d registered",
+             result["total"], result["registered"])
+    return JSONResponse(result)
+
+
+@app.get("/bridge/catalogue")
+async def get_catalogue(request: Request):
+    """Return full product catalogue — for Termux dashboard to see what's live."""
+    _auth(request)
+    from agents import pack_importer
+    catalogue = pack_importer.get_store_catalogue()
+    return JSONResponse({"products": catalogue, "count": len(catalogue)})
+
+
 # ── INSTRUCTIONS for Node.js side ────────────────────────────────────────────
 #
 # Add this to your publishing-empire-live/server-production.js:

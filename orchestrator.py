@@ -153,6 +153,10 @@ def run_forever():
     # Heartbeat — every 5 minutes
     scheduler.add_job(heartbeat_agent.run_heartbeat, "interval", minutes=5)
 
+    # Scan imports/ for Termux export packs — every 30 minutes
+    from agents import pack_importer
+    scheduler.add_job(pack_importer.scan_imports_folder, "interval", minutes=30)
+
     # Payout threshold check — every 6 hours (pays out when balance > $50)
     scheduler.add_job(
         payout_agent.check_and_payout_threshold,
