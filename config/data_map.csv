@@ -1,0 +1,5 @@
+data_item,path_or_endpoint,type,check_command,expected_good_result
+webhook_health,http://127.0.0.1:8001/health,http,curl -s http://127.0.0.1:8001/health,200_json
+exports_folder,~/lousta-core/output/exports,files,find ~/lousta-core/output/exports -maxdepth 2 -type f | tail,recent_assets
+pm2_fleet,pm2 list,process,pm2 list,online_processes
+revenue_jsonl,~/.lousta_system_core/vault/revenue_log.jsonl,jsonl,tail -20 ~/.lousta_system_core/vault/revenue_log.jsonl,real_stripe_ids

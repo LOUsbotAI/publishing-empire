@@ -1,0 +1,17 @@
+# Secrets — never commit
+.env
+*.env
+secrets/
+.lousta_system_core/
+**/secrets/**
+**/vault/**
+active_key_audit.json
+
+# OS / editor
+.DS_Store
+*.swp
+__pycache__/
+*.pyc
+
+# Generated output that shouldn't be versioned
+reports/

@@ -1,0 +1,6 @@
+key_label,system,environment,masked_prefix,storage_location,status,rule
+OPENAI_API_KEY,LouBot/Publishing,live_or_dev,sk-****,~/.lousta_system_core/secrets/.env,NEEDS_KEY,never_store_full_key_in_excel
+STRIPE_SECRET_KEY,Stripe API,live,sk_live_****,~/.lousta_system_core/secrets/.env,NEEDS_KEY,confirm_live_vs_test
+STRIPE_WEBHOOK_SECRET,Stripe Webhook,live,whsec_****,~/.lousta_system_core/secrets/.env,NEEDS_KEY,rotate_if_exposed
+GEMINI_API_KEY,Google AI Studio,dev_or_live,AIza****,~/.lousta_system_core/secrets/.env,NEEDS_KEY,provider_health_check
+CLOUDFLARE_API_TOKEN,Cloudflare,live,cf_****,~/.lousta_system_core/secrets/.env,NEEDS_KEY,least_privilege

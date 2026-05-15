@@ -1,0 +1,5 @@
+section,pack_system,product_type,active_key_ref,info,status,data_source,next_step
+Publishing,PDF EPUB Pack Generator,Sellable Pack,OPENAI_API_KEY,creates PDF EPUB cover metadata,ACTIVE,~/lousta-core/output/exports,confirm unique assets
+Publishing,Audiobook Pack Generator,Sellable Pack,TTS_PROVIDER_KEY,creates MP3 audiobook assets,ACTIVE,~/lousta-core/output/audio,check newest audio
+Stripe,Checkout Webhook Receiver,Revenue System,STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET,receives checkout and charge events,ACTIVE,~/lousta_cloud_brain/stripe-webhook/app.py,run health test
+Data,Revenue Log,Data Source,STRIPE_WEBHOOK_SECRET,real webhook revenue only,NEEDS_DATA,~/.lousta_system_core/vault/revenue_log.jsonl,filter fake test IDs
