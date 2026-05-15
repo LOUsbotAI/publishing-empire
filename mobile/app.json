@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Publishing Empire",
+    "slug": "publishing-empire",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lousta.publishingempire"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      },
+      "package": "com.lousta.publishingempire"
+    }
+  }
+}
