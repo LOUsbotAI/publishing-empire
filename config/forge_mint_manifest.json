@@ -1,0 +1,13 @@
+{
+  "title": "Termux AI Publishing Blueprint",
+  "author": "Louie",
+  "chapters": [
+    {"prompt": "Explain what Termux is, why it turns an Android phone into a Linux server, and how it enables AI-powered publishing on mobile hardware."},
+    {"prompt": "Walk through installing and configuring the core tools: Termux, Python, Node.js, PM2, and the lousta-core publishing suite."},
+    {"prompt": "Show how to connect OpenAI and Gemini API keys securely using the vault .env pattern, including key masking and audit scripts."},
+    {"prompt": "Explain the Forge Mint pipeline: manifest → AI content generation → PDF/EPUB pack output, with real examples."},
+    {"prompt": "Cover the audiobook generation flow using OpenAI TTS, chapter splitting, and MP3 export."},
+    {"prompt": "Detail the Stripe webhook receiver: setting up live checkout events, signature verification, and the revenue JSONL log."},
+    {"prompt": "Provide a complete launch checklist: health checks, PM2 fleet management, key audit, and first live sale verification."}
+  ]
+}
