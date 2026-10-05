@@ -3,10 +3,10 @@
  "modules": [
   {
    "id": "chat",
-   "label": "Chat",
+   "label": "Classic Chat",
    "icon": "💬",
    "url": "http://127.0.0.1:1182/",
-   "primary": true,
+   "primary": false,
    "category": "Core"
   },
   {
@@ -405,5 +405,10 @@
    "role": "llama",
    "url": "http://127.0.0.1:11438/v1/models"
   }
- ]
+ ],
+ "chat": {
+  "url": "http://127.0.0.1:11880/api/chat",
+  "message_key": "message",
+  "_verify": "Confirm message_key with the discovery block in README"
+ }
 }

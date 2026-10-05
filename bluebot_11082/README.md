@@ -1,8 +1,13 @@
 # Lousta Hub 11082
 
-One screen at `http://127.0.0.1:11082/` that brings all the separate BlueBot pages together.
+One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot pages together.
 
-- **Bottom bar:** `Chat | Code | Work | Build | More` (R4.0 rule).
+- **Chat is native.** Messages go to the existing BlueBot chat route (11880 `/api/chat`). It's the same behaviour 1182 chat already has.
+- **Everything (More):** health dashboard plus every page, grouped and searchable.
+- **Older pages** open full screen in a clean viewer with Back, Reload and Open. You never get two nav bars.
+- Dark and light themes. The phone setting is followed until you tap the moon.
+
+- **Bottom bar:** `Chat | Code | Work | Build | More` (R4.0 rule). Code/Work/Build open LouCode, Workbench and Workspace.
 - **More:** searchable, grouped: Core, Control & Gate, Observe, Business & Control,
   Social & Channels, LOUCORP (Future).
 - **Health pill:** live up/down for 1182, 11880, 11770, 11883, 18082, 18097, 1185, 11902, 6205, 11437, 11438.
@@ -14,7 +19,7 @@ One screen at `http://127.0.0.1:11082/` that brings all the separate BlueBot pag
 | Item | Value |
 |---|---|
 | Bind | 127.0.0.1 only |
-| Methods | GET/HEAD only. POST/PUT/PATCH/DELETE → 405 |
+| Methods | GET/HEAD, plus **one** write: `POST /hub/chat`, forwarded unchanged to `127.0.0.1:11880/api/chat` (64 KB max, JSON only). Every other write → 405 |
 | Execution | None. No subprocess, tmux, 11884, `/api/tmux/send`, `run-approved`, `/loukey/auto` |
 | Live 1182 | Untouched |
 | Health probes | Server-side GET, 127.0.0.1 URLs only, 2s timeout |
@@ -26,6 +31,15 @@ bash ~/publishing-empire/bluebot_11082/STAGE_11082.sh      # copies to supervise
 bash <CANDIDATE_ROOT>/START_11082.sh                        # new window in existing studio tmux
 ```
 Stop: `tmux -L lousta-bluebot-studio kill-window -t hub11082`. Rollback: delete the candidate folder.
+
+## Confirm the chat message field (read-only)
+The hub sends `{"message": "...", "conversation_id", "trace_id", "source"}`. If BlueBot answers
+"didn't accept the message format", check which field 11880 expects:
+```bash
+WB="$HOME/bluebits/empire_director_v1/supervised_dev/1182_bluebot_chat_installation_ready_v1/BLUEBOT_CHAT_INSTALLATION_READY_V1_20260926T020840Z/workbench"
+grep -n -B2 -A15 'api/chat"' "$WB/app_trainee.py" | head -60
+```
+Then set `"chat": {"message_key": "<field>"}` in `modules.json`. No restart needed.
 
 ## Add or change pages
 Edit `modules.json`. Live tile: `{"id","label","icon","category","url":"http://127.0.0.1:<port>/..."}`.

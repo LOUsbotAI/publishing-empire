@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """BlueBot 11082 hub: one screen that brings the separate pages together.
 
-Read-only by design:
+Read-only by design, with one exception:
   - binds 127.0.0.1 only
-  - answers GET/HEAD only; every other method gets 405
+  - answers GET/HEAD; the ONLY write is POST /hub/chat, which forwards the
+    body unchanged to the existing BlueBot chat route (127.0.0.1 .../api/chat).
+    That is the same chat behaviour 1182 already has. Every other write -> 405
   - serves index.html + modules.json, and /hub/health (server-side GET probes
     of 127.0.0.1 URLs listed in modules.json)
   - no proxying of actions, no subprocess, no tmux, no 11884
@@ -26,7 +28,8 @@ PORT = int(os.environ.get("HUB_PORT", "11082"))
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/index.html": ("index.html", "text/html; charset=utf-8"),
           "/modules.json": ("modules.json", "application/json")}
-VERSION = "BLUEBOT_HUB_11082_V1"
+VERSION = "BLUEBOT_HUB_11082_V2"
+MAX_CHAT_BYTES = 64 * 1024
 
 
 def local_only(url):
@@ -56,7 +59,7 @@ def probe(item):
         code = None
     out["ms"] = round((time.monotonic() - t) * 1000)
     out["code"] = code
-    out["state"] = "DOWN" if code is None else ("UP" if code < 500 else "ERROR")
+    out["state"] = "DOWN" if code is None else ("ERROR" if code == 404 or code >= 500 else "UP")
     return out
 
 
@@ -96,21 +99,46 @@ class Hub(BaseHTTPRequestHandler):
                                         "production": "LOCKED", "execution": "NONE",
                                         "services": results})
         if path == "/hub/status":
-            return self.send_json(200, {"version": VERSION, "port": PORT, "methods": ["GET", "HEAD"],
+            return self.send_json(200, {"version": VERSION, "port": PORT, "methods": ["GET", "HEAD", "POST /hub/chat only"],
                                         "execution": "NONE", "production": "LOCKED"})
         self.send_json(404, {"error": "NOT_FOUND"})
 
     do_HEAD = do_GET
 
+    def do_POST(self):
+        if urlsplit(self.path).path != "/hub/chat":
+            return self.refuse()
+        url = load_config().get("chat", {}).get("url", "")
+        if not local_only(url) or urlsplit(url).path != "/api/chat":
+            return self.send_json(403, {"error": "CHAT_TARGET_NOT_ALLOWED"})
+        n = int(self.headers.get("Content-Length") or 0)
+        if n <= 0 or n > MAX_CHAT_BYTES:
+            return self.send_json(413, {"error": "BODY_SIZE", "max": MAX_CHAT_BYTES})
+        body = self.rfile.read(n)
+        try:
+            json.loads(body)
+        except ValueError:
+            return self.send_json(400, {"error": "BODY_NOT_JSON"})
+        req = urllib.request.Request(url, data=body, method="POST",
+                                     headers={"Content-Type": "application/json", "User-Agent": VERSION})
+        try:
+            with urllib.request.urlopen(req, timeout=180) as r:
+                code, data = r.status, r.read()
+        except urllib.error.HTTPError as e:
+            code, data = e.code, e.read()
+        except Exception as e:
+            return self.send_json(502, {"error": "BLUEBOT_UNREACHABLE", "detail": type(e).__name__})
+        self.send(code, data, "application/json")
+
     def refuse(self):
         self.send_json(405, {"error": "READ_ONLY_HUB", "allowed": ["GET", "HEAD"]})
 
-    do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = refuse
+    do_PUT = do_PATCH = do_DELETE = do_OPTIONS = refuse
 
 
 if __name__ == "__main__":
     srv = ThreadingHTTPServer((HOST, PORT), Hub)
-    print("%s listening on http://%s:%d (GET only, production LOCKED)" % (VERSION, HOST, PORT), flush=True)
+    print("%s listening on http://%s:%d (GET + chat only, production LOCKED)" % (VERSION, HOST, PORT), flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
