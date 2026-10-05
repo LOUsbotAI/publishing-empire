@@ -1,0 +1,409 @@
+{
+ "_note": "Edit to add/remove pages. Live tiles need url=http://127.0.0.1:<port>/... . status=PLANNED tiles show PLANNED / NOT CONNECTED and never load anything. primary=true (max 4) go in the bottom bar; everything else is under More.",
+ "modules": [
+  {
+   "id": "chat",
+   "label": "Chat",
+   "icon": "💬",
+   "url": "http://127.0.0.1:1182/",
+   "primary": true,
+   "category": "Core"
+  },
+  {
+   "id": "loucode",
+   "label": "Code",
+   "icon": "⌘",
+   "url": "http://127.0.0.1:1182/loucode.html",
+   "category": "Core",
+   "primary": true
+  },
+  {
+   "id": "workbench",
+   "label": "Work",
+   "icon": "🛠",
+   "url": "http://127.0.0.1:1182/workbench",
+   "primary": true,
+   "category": "Core"
+  },
+  {
+   "id": "workspace",
+   "label": "Build",
+   "icon": "▤",
+   "url": "http://127.0.0.1:1182/workspace.html",
+   "category": "Core",
+   "primary": true
+  },
+  {
+   "id": "command",
+   "label": "Command",
+   "icon": "♣",
+   "url": "http://127.0.0.1:1182/app_v4.html",
+   "primary": false,
+   "category": "Core"
+  },
+  {
+   "id": "gate",
+   "label": "Gate",
+   "icon": "🔒",
+   "url": "http://127.0.0.1:1182/approvalpad.html",
+   "primary": false,
+   "category": "Control & Gate"
+  },
+  {
+   "id": "termux",
+   "label": "Termux",
+   "icon": "›_",
+   "url": "http://127.0.0.1:1182/termux.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "trace",
+   "label": "Trace",
+   "icon": "≡",
+   "url": "http://127.0.0.1:1182/trace.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "evidence",
+   "label": "Evidence",
+   "icon": "▣",
+   "url": "http://127.0.0.1:1182/evidence.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "galaxy",
+   "label": "Galaxy",
+   "icon": "✦",
+   "url": "http://127.0.0.1:1182/galaxy.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "brain",
+   "label": "Brain",
+   "icon": "🧠",
+   "url": "http://127.0.0.1:1182/brain.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "architect",
+   "label": "Architect",
+   "icon": "◫",
+   "url": "http://127.0.0.1:1182/architect.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "app_v3",
+   "label": "Command v3",
+   "icon": "♧",
+   "url": "http://127.0.0.1:1182/app_v3.html",
+   "category": "Core",
+   "primary": false
+  },
+  {
+   "id": "owner",
+   "label": "Owner Ctl",
+   "icon": "◉",
+   "url": "http://127.0.0.1:18082/",
+   "category": "Control & Gate",
+   "primary": false
+  },
+  {
+   "id": "approval2",
+   "label": "LouBot Pad",
+   "icon": "🤖",
+   "url": "http://127.0.0.1:18097/",
+   "category": "Control & Gate",
+   "primary": false
+  },
+  {
+   "id": "honeycomb",
+   "label": "Honeycomb",
+   "icon": "⬡",
+   "url": "http://127.0.0.1:1185/",
+   "category": "Business & Control",
+   "primary": false
+  },
+  {
+   "id": "proposals",
+   "label": "Proposals",
+   "icon": "✎",
+   "url": "http://127.0.0.1:11902/",
+   "category": "Business & Control",
+   "primary": false
+  },
+  {
+   "id": "brainhub",
+   "label": "Brain Hub",
+   "icon": "◎",
+   "url": "http://127.0.0.1:6205/",
+   "category": "Business & Control",
+   "primary": false
+  },
+  {
+   "id": "social_0",
+   "label": "TikTok",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_1",
+   "label": "YouTube / Shorts",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_2",
+   "label": "Instagram / Reels",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_3",
+   "label": "Facebook Pages",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_4",
+   "label": "Threads",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_5",
+   "label": "LinkedIn",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_6",
+   "label": "X",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_7",
+   "label": "Pinterest",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_0",
+   "label": "Executive / COO",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_1",
+   "label": "Product & Pricing",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_2",
+   "label": "Sales",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_3",
+   "label": "Distribution",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_4",
+   "label": "Marketing / Social",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_5",
+   "label": "Customer Care",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_6",
+   "label": "Legal / Compliance",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_7",
+   "label": "Finance",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_8",
+   "label": "Production Factory",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_9",
+   "label": "Logistics",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_10",
+   "label": "Analytics",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_11",
+   "label": "Agent HR",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_12",
+   "label": "Engineering",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_13",
+   "label": "SRE / Reliability",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_14",
+   "label": "Security & Trust",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_15",
+   "label": "Privacy / Data",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_16",
+   "label": "Connector Eng.",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_17",
+   "label": "AI Model Ops",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_18",
+   "label": "Research",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_19",
+   "label": "Backup / DR",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_20",
+   "label": "Simulation",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  }
+ ],
+ "health": [
+  {
+   "port": 1182,
+   "role": "Front door",
+   "url": "http://127.0.0.1:1182/api/status"
+  },
+  {
+   "port": 11880,
+   "role": "BlueBot",
+   "url": "http://127.0.0.1:11880/api/status"
+  },
+  {
+   "port": 11770,
+   "role": "Owner Gate",
+   "url": "http://127.0.0.1:11770/loukey/status"
+  },
+  {
+   "port": 11883,
+   "role": "Readback",
+   "url": "http://127.0.0.1:1182/api/owner-termux-r8r3/health"
+  },
+  {
+   "port": 18082,
+   "role": "Owner Ctl",
+   "url": "http://127.0.0.1:18082/"
+  },
+  {
+   "port": 18097,
+   "role": "LouBot Pad",
+   "url": "http://127.0.0.1:18097/"
+  },
+  {
+   "port": 1185,
+   "role": "Honeycomb",
+   "url": "http://127.0.0.1:1185/"
+  },
+  {
+   "port": 11902,
+   "role": "Proposals",
+   "url": "http://127.0.0.1:11902/"
+  },
+  {
+   "port": 6205,
+   "role": "Brain Hub",
+   "url": "http://127.0.0.1:6205/health"
+  },
+  {
+   "port": 11437,
+   "role": "Qwen",
+   "url": "http://127.0.0.1:11437/v1/models"
+  },
+  {
+   "port": 11438,
+   "role": "llama",
+   "url": "http://127.0.0.1:11438/v1/models"
+  }
+ ]
+}

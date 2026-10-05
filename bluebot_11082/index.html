@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lousta Hub 11082</title>
+<style>
+:root{
+  --bg:#0b0d14;--panel:#141824;--panel2:#1b2030;--line:#2a3045;--text:#e8eaf2;--dim:#9aa1b6;
+  --accent:#8b5cf6;--accent2:#6d4ae0;--up:#22c55e;--warn:#eab308;--down:#ef4444;--gray:#6b7280;
+  --nav-h:64px;--head-h:52px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.app{display:grid;grid-template-rows:var(--head-h) 1fr auto var(--nav-h);height:100dvh}
+header{display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;font-weight:700}
+.title{font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.title small{display:block;font-weight:400;color:var(--dim);font-size:11px;letter-spacing:0}
+.spacer{flex:1}
+.pill{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--panel2);font-size:13px;min-height:36px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--gray);flex:0 0 auto}
+.dot.UP{background:var(--up)}.dot.ERROR{background:var(--warn)}.dot.DOWN,.dot.REFUSED_NON_LOCAL{background:var(--down)}.dot.PLANNED{background:transparent;border:1px dashed var(--dim)}
+main{position:relative;overflow:hidden;background:var(--bg)}
+main iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
+main iframe.on{display:block}
+.blank{position:absolute;inset:0;display:none;place-content:center;text-align:center;padding:24px;gap:10px}
+.blank.on{display:grid}
+.blank h2{margin:0;font-size:18px}.blank p{margin:0;color:var(--dim)}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent)}
+.bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--panel);border-top:1px solid var(--line);font-size:12px;color:var(--dim);overflow:hidden}
+.bar .cur{color:var(--text);font-weight:600;white-space:nowrap}
+.bar .url{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,monospace}
+.bar a{color:var(--text);text-decoration:none;padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{display:grid;place-items:center;align-content:center;gap:2px;font-size:12px;color:var(--dim);min-height:44px}
+nav button .i{font-size:19px;line-height:1}
+nav button[aria-current="page"]{color:var(--text);background:var(--panel2)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:10}
+.sheet-bg.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:80dvh;overflow:auto;background:var(--panel);border-top:1px solid var(--line);
+  border-radius:16px 16px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));z-index:11;display:none}
+.sheet.on{display:block}
+.sheet h3{margin:4px 0 12px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.tile{display:grid;gap:4px;justify-items:center;padding:12px 6px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);min-height:76px;position:relative}
+.tile .i{font-size:22px}.tile span{font-size:12px;text-align:center}
+.tile .dot{position:absolute;top:8px;right:8px}
+.tile[aria-current="page"]{border-color:var(--accent)}
+.svc{display:grid;grid-template-columns:auto 56px 1fr auto;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.svc code{color:var(--dim);font-size:12px}
+.cat{margin:14px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.tile.planned{opacity:.6;border-style:dashed}.tile .tag{font-size:9px;color:var(--warn);letter-spacing:.04em}
+.search{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;min-height:44px}
+.lock{font:11px ui-monospace,monospace;color:var(--dim);text-align:center;padding:4px 8px;background:var(--bg)}
+@media (min-width:900px){
+  .app{grid-template-columns:200px 1fr;grid-template-rows:var(--head-h) 1fr auto}
+  header{grid-column:1/3}
+  nav{grid-row:2/4;grid-column:1;display:flex;flex-direction:column;border-top:0;border-right:1px solid var(--line);overflow:auto}
+  nav button{grid-template-columns:28px 1fr;justify-items:start;padding:10px 14px;font-size:14px;place-items:center start}
+  main{grid-column:2}.bar{grid-column:2}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo" aria-hidden="true">♣</div>
+    <div class="title">LOUSTA HUB<small>11082 · all pages, one place</small></div>
+    <div class="spacer"></div>
+    <button class="pill" id="healthBtn" aria-haspopup="dialog" aria-controls="healthSheet">
+      <span class="dot" id="healthDot"></span><span id="healthText">checking…</span>
+    </button>
+  </header>
+
+  <main id="stage" aria-live="polite">
+    <div class="blank" id="blank">
+      <h2 id="blankTitle">Pick a page</h2>
+      <p id="blankText">Use the bar below, or “More” for every page.</p>
+      <div><button class="btn primary" id="blankRetry" hidden>Load anyway</button></div>
+    </div>
+  </main>
+
+  <div class="bar">
+    <span class="cur" id="curLabel">—</span>
+    <span class="url" id="curUrl"></span>
+    <button class="btn" id="reloadBtn" title="Reload this page" aria-label="Reload this page">↻</button>
+    <a id="openTab" href="#" target="_blank" rel="noopener" aria-label="Open in new tab">↗</a>
+  </div>
+
+  <nav id="nav" aria-label="Pages"></nav>
+</div>
+<div class="lock">PRODUCTION=LOCKED · SELF_APPROVAL=NO · MAX_EXECUTING=1 · HUB=READ_ONLY</div>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<section class="sheet" id="allSheet" role="dialog" aria-modal="true" aria-labelledby="allTitle">
+  <h3><span id="allTitle">More</span><button class="btn" data-close aria-label="Close">✕</button></h3>
+  <input class="search" id="search" type="search" placeholder="Search pages…" aria-label="Search pages"><div id="allGrid"></div>
+</section>
+<section class="sheet" id="healthSheet" role="dialog" aria-modal="true" aria-labelledby="healthTitle">
+  <h3><span id="healthTitle">Services</span><span><button class="btn" id="healthRefresh">Refresh</button> <button class="btn" data-close aria-label="Close">✕</button></span></h3>
+  <div id="healthList"></div>
+</section>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const stage=$('#stage'),nav=$('#nav'),allGrid=$('#allGrid');
+let modules=[],health={},current=null,opener=null;
+const frames=new Map();
+const portOf=u=>{try{const x=new URL(u);return +(x.port||80)}catch(e){return null}};
+const isLocal=u=>{try{const x=new URL(u);return x.protocol==='http:'&&(x.hostname==='127.0.0.1'||x.hostname==='localhost')}catch(e){return false}};
+const planned=m=>m.status==='PLANNED'||!m.url;
+const stateOf=m=>{if(planned(m))return 'PLANNED';const h=health[portOf(m.url)];return h?h.state:'UNKNOWN'};
+
+function store(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function recall(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+function navButton(m){
+  const b=document.createElement('button');
+  b.dataset.id=m.id;b.innerHTML='<span class="i" aria-hidden="true"></span><span></span>';
+  b.firstChild.textContent=m.icon||'•';b.lastChild.textContent=m.label;
+  b.addEventListener('click',()=>show(m.id));
+  return b;
+}
+function buildNav(){
+  nav.textContent='';
+  const prim=modules.filter(m=>m.primary).slice(0,4);
+  prim.forEach(m=>nav.appendChild(navButton(m)));
+  const all=document.createElement('button');
+  all.innerHTML='<span class="i" aria-hidden="true">▦</span><span>More</span>';
+  all.setAttribute('aria-haspopup','dialog');all.id='allBtn';
+  all.addEventListener('click',e=>openSheet('#allSheet',e.currentTarget));
+  nav.appendChild(all);
+  allGrid.textContent='';
+  const cats=[];modules.forEach(m=>{const c=m.category||'Other';if(!cats.includes(c))cats.push(c)});
+  cats.forEach(c=>{
+    const h=document.createElement('div');h.className='cat';h.textContent=c;h.dataset.cat=c;allGrid.appendChild(h);
+    const g=document.createElement('div');g.className='grid';g.dataset.cat=c;allGrid.appendChild(g);
+    modules.filter(m=>(m.category||'Other')===c).forEach(m=>{
+      const t=document.createElement('button');t.className='tile'+(planned(m)?' planned':'');t.dataset.id=m.id;
+      t.innerHTML='<span class="dot"></span><span class="i" aria-hidden="true"></span><span></span>';
+      t.children[1].textContent=m.icon||'•';t.children[2].textContent=m.label;
+      if(planned(m)){const tag=document.createElement('span');tag.className='tag';tag.textContent='PLANNED / NOT CONNECTED';t.appendChild(tag);t.setAttribute('aria-label',m.label+', planned, not connected')}
+      t.addEventListener('click',()=>{closeSheets();show(m.id)});
+      g.appendChild(t);
+    });
+  });
+}
+function filterTiles(q){
+  q=q.trim().toLowerCase();
+  allGrid.querySelectorAll('.grid').forEach(g=>{
+    let n=0;g.querySelectorAll('.tile').forEach(t=>{const m=modules.find(x=>x.id===t.dataset.id);
+      const hit=!q||(m.label+' '+(m.category||'')).toLowerCase().includes(q);t.hidden=!hit;if(hit)n++});
+    g.hidden=!n;allGrid.querySelector('.cat[data-cat="'+CSS.escape(g.dataset.cat)+'"]').hidden=!n;
+  });
+}
+function paintCurrent(){
+  document.querySelectorAll('[data-id]').forEach(el=>{
+    if(el.dataset.id===current)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');
+  });
+  document.querySelectorAll('.tile').forEach(t=>{
+    const m=modules.find(x=>x.id===t.dataset.id);t.querySelector('.dot').className='dot '+stateOf(m);
+  });
+}
+function show(id,force){
+  const m=modules.find(x=>x.id===id);if(!m)return;
+  current=id;store('hub.current',id);
+  $('#curLabel').textContent=m.label;$('#curUrl').textContent=planned(m)?'PLANNED / NOT CONNECTED':m.url;
+  $('#openTab').hidden=planned(m);if(!planned(m))$('#openTab').href=m.url;
+  frames.forEach(f=>f.classList.remove('on'));
+  const blank=$('#blank');blank.classList.remove('on');
+  if(planned(m)){blankMsg(m.label+' · PLANNED / NOT CONNECTED',(m.category||'')+' space reserved. Nothing is installed, connected or authorised. It goes live only after real runtime proof and an owner-approved commissioning step.',false);return paintCurrent();}
+  if(!isLocal(m.url)){blankMsg('Blocked','Only 127.0.0.1 pages are allowed in the hub.',false);return paintCurrent();}
+  const st=stateOf(m);
+  if(!frames.has(id)&&st==='DOWN'&&!force){
+    blankMsg(m.label+' is offline','Port '+portOf(m.url)+' is not answering. Start that service, then tap Load anyway.',true);
+    return paintCurrent();
+  }
+  let f=frames.get(id);
+  if(!f){f=document.createElement('iframe');f.title=m.label;f.src=m.url;f.loading='eager';
+    f.setAttribute('allow','microphone; display-capture; clipboard-write');stage.appendChild(f);frames.set(id,f);}
+  f.classList.add('on');paintCurrent();
+}
+function blankMsg(t,p,retry){
+  $('#blankTitle').textContent=t;$('#blankText').textContent=p;$('#blankRetry').hidden=!retry;$('#blank').classList.add('on');
+}
+$('#blankRetry').addEventListener('click',()=>show(current,true));
+$('#reloadBtn').addEventListener('click',()=>{const f=frames.get(current);if(f){f.src=f.src}else if(current)show(current,true)});
+
+function openSheet(sel,from){
+  closeSheets(true);opener=from||document.activeElement;
+  $('#sheetBg').classList.add('on');const s=$(sel);s.classList.add('on');
+  (s.querySelector('[data-close]')||s).focus();
+}
+function closeSheets(keep){
+  const was=document.querySelector('.sheet.on');
+  document.querySelectorAll('.sheet,.sheet-bg').forEach(e=>e.classList.remove('on'));
+  if(was&&!keep&&opener&&opener.focus)opener.focus();
+  if(!keep)opener=null;
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-close]')||e.target.id==='sheetBg')closeSheets()});
+document.addEventListener('keydown',e=>{
+  const s=document.querySelector('.sheet.on');
+  if(e.key==='Escape'&&s){closeSheets();return}
+  if(s&&e.key==='Tab'){
+    const f=[...s.querySelectorAll('button,[href],input')].filter(x=>!x.disabled&&x.offsetParent!==null);
+    if(!f.length)return;const a=f[0],z=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}
+    else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}
+  }
+});
+$('#search').addEventListener('input',e=>filterTiles(e.target.value));
+$('#healthBtn').addEventListener('click',e=>openSheet('#healthSheet',e.currentTarget));
+$('#healthRefresh').addEventListener('click',refreshHealth);
+
+async function refreshHealth(){
+  let data;
+  try{const r=await fetch('/hub/health',{cache:'no-store'});data=await r.json()}catch(e){
+    $('#healthText').textContent='hub offline';$('#healthDot').className='dot DOWN';return}
+  health={};data.services.forEach(s=>{health[s.port]=s});
+  const up=data.services.filter(s=>s.state==='UP').length,n=data.services.length;
+  $('#healthText').textContent=up+'/'+n+' up';
+  $('#healthDot').className='dot '+(up===n?'UP':up===0?'DOWN':'ERROR');
+  const list=$('#healthList');list.textContent='';
+  data.services.forEach(s=>{
+    const row=document.createElement('div');row.className='svc';
+    row.innerHTML='<span class="dot"></span><b></b><span></span><code></code>';
+    row.children[0].className='dot '+s.state;row.children[1].textContent=s.port;
+    row.children[2].textContent=s.role;row.children[3].textContent=s.code?('HTTP '+s.code+' · '+s.ms+'ms'):s.state;
+    list.appendChild(row);
+  });
+  paintCurrent();
+}
+
+async function boot(){
+  try{const r=await fetch('/modules.json',{cache:'no-store'});modules=(await r.json()).modules.filter(m=>m&&m.id&&(m.url||m.status==='PLANNED'))}
+  catch(e){blankMsg('Config missing','modules.json could not be loaded.',false);return}
+  buildNav();
+  await refreshHealth();
+  const want=(location.hash||'').slice(1)||recall('hub.current')||(modules.find(m=>m.primary)||modules[0]).id;
+  show(modules.some(m=>m.id===want)?want:modules[0].id);
+  if(location.hash.slice(1)!==current)history.replaceState(null,'','#'+current);
+  setInterval(refreshHealth,15000);
+}
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id)show(id)});
+boot();
+})();
+</script>
+</body>
+</html>
