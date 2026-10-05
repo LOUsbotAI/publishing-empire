@@ -456,6 +456,48 @@
    "prefix": "@grok-image ",
    "desc": "Image generation lane on 11880.",
    "color": "#ec4899"
+  },
+  {
+   "id": "brain",
+   "label": "Brain",
+   "icon": "🧠",
+   "prefix": "Brain (Brain Challenger, suggest-only): challenge and improve this - ",
+   "color": "#a855f7",
+   "desc": "Brain department via BlueBot. Suggest-only."
+  },
+  {
+   "id": "engineering",
+   "label": "Engineering",
+   "icon": "⚙",
+   "prefix": "Engineering department: ",
+   "color": "#14b8a6",
+   "desc": "Engineering department via BlueBot."
+  },
+  {
+   "id": "loucode",
+   "label": "LouCode",
+   "icon": "⌘",
+   "prefix": "LouCode (Engineering): write the code for this - ",
+   "color": "#22c55e",
+   "desc": "LouCode coding specialist inside Engineering."
+  },
+  {
+   "id": "claude",
+   "label": "Claude",
+   "icon": "✳",
+   "prefix": "",
+   "brain": "claude",
+   "color": "#d97757",
+   "desc": "Straight to Claude (needs ANTHROPIC_API_KEY). Falls back if it fails."
+  },
+  {
+   "id": "qwen_local",
+   "label": "Qwen (local)",
+   "icon": "⌂",
+   "prefix": "",
+   "brain": "qwen",
+   "color": "#64748b",
+   "desc": "Straight to the local model 11437."
   }
  ],
  "_bots_note": "Each bot is a prefix on the same 11880 chat route. Only @grok and @grok-image are proven in the 11880 log; add codefix agents / trainees here after the census confirms their names. Each bot can set its own color (hex) and icon; message boxes use them.",
@@ -464,5 +506,89 @@
   "screen_key": "screen_plain",
   "history_key": "history_plain",
   "_note": "Set readback_url to the 11883 snapshot GET route from the census (WO-01). Supervised keyboard (11884) is not wired: owner-manual only."
+ },
+ "brains": {
+  "_note": "BlueBot answers first. If it times out or fails, the next brain in 'order' answers. Remote brains need a key (and model) in ~/.lousta/keys.env. Set fallback=false to turn this off.",
+  "fallback": true,
+  "order": [
+   "bluebot",
+   "qwen",
+   "llama",
+   "grok",
+   "claude",
+   "openai",
+   "gemini",
+   "openrouter",
+   "groq"
+  ],
+  "list": {
+   "bluebot": {
+    "label": "BlueBot",
+    "type": "bluebot",
+    "timeout": 45
+   },
+   "qwen": {
+    "label": "Qwen (local)",
+    "type": "openai",
+    "local": true,
+    "base": "http://127.0.0.1:11437/v1",
+    "timeout": 120
+   },
+   "llama": {
+    "label": "llama (local)",
+    "type": "openai",
+    "local": true,
+    "base": "http://127.0.0.1:11438/v1",
+    "timeout": 120
+   },
+   "grok": {
+    "label": "Grok",
+    "type": "openai",
+    "base": "https://api.x.ai/v1",
+    "key_env": "XAI_API_KEY",
+    "model_env": "XAI_MODEL",
+    "timeout": 90
+   },
+   "claude": {
+    "label": "Claude",
+    "type": "anthropic",
+    "key_env": "ANTHROPIC_API_KEY",
+    "model_env": "ANTHROPIC_MODEL",
+    "model": "claude-opus-5-5",
+    "timeout": 120
+   },
+   "openai": {
+    "label": "OpenAI",
+    "type": "openai",
+    "base": "https://api.openai.com/v1",
+    "key_env": "OPENAI_API_KEY",
+    "model_env": "OPENAI_MODEL",
+    "timeout": 90
+   },
+   "gemini": {
+    "label": "Gemini",
+    "type": "openai",
+    "base": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "key_env": "GEMINI_API_KEY",
+    "model_env": "GEMINI_MODEL",
+    "timeout": 90
+   },
+   "openrouter": {
+    "label": "OpenRouter",
+    "type": "openai",
+    "base": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY",
+    "model_env": "OPENROUTER_MODEL",
+    "timeout": 90
+   },
+   "groq": {
+    "label": "Groq",
+    "type": "openai",
+    "base": "https://api.groq.com/openai/v1",
+    "key_env": "GROQ_API_KEY",
+    "model_env": "GROQ_MODEL",
+    "timeout": 60
+   }
+  }
  }
 }

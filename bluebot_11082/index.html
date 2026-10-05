@@ -398,7 +398,9 @@ body.viewing .nav{display:none}
   <div class="grab"></div>
   <div class="sec" style="margin-top:0"><h2 id="stTitle">System</h2><button class="chip" id="stRefresh">Refresh</button></div>
   <div id="svcList"></div>
-  <div class="locks"><span>PRODUCTION=LOCKED</span><span>SELF_APPROVAL=NO</span><span>MAX_EXECUTING=1</span><span>BRAIN=SUGGEST_ONLY</span><span>HUB=VIEW+CHAT_ONLY</span><span>TERMUX_INPUT=OWNER_MANUAL</span></div>
+  <div class="sec"><h2>Brains</h2><span id="brainNote"></span></div>
+  <div id="brainList"></div>
+  <div class="locks"><span>PRODUCTION=LOCKED</span><span>SELF_APPROVAL=NO</span><span>MAX_EXECUTING=1</span><span>BRAIN=SUGGEST_ONLY</span><span>HUB=VIEW+CHAT_ONLY</span><span>BRAINS=CHAT_ONLY_NO_TOOLS</span><span>TERMUX_INPUT=OWNER_MANUAL</span></div>
 </section>
 
 <script>
@@ -496,6 +498,14 @@ async function refresh(){
   renderBento(d.services);paintDots();
 }
 $('#stRefresh').onclick=refresh;
+async function refreshBrains(){let d;try{d=await (await fetch('/hub/brains',{cache:'no-store'})).json()}catch(e){return}
+  const L=$('#brainList');L.textContent='';
+  $('#brainNote').textContent=d.keys_file_exists?(d.keys_file_private?'keys file private ✓':'⚠ chmod 600 your keys file'):'no keys file yet';
+  d.brains.forEach((b,i)=>{const r=el('div','svc');const mid=el('div');const h=b.local?health[{bluebot:11880,qwen:11437,llama:11438}[b.id]]:null;
+    const st=b.local?(h?h.state:'UNKNOWN'):(b.ready?'UP':'PLANNED');
+    mid.append(txt('b','',(i+1)+'. '+b.label),txt('small','',b.local?'local':(b.ready?'key set'+(b.model?' · '+b.model:''):'needs '+b.needs)));
+    r.append(el('span','dot '+st),mid,txt('code','',b.local?(h&&h.code?'HTTP '+h.code:st):(b.ready?'ready':'—')));L.append(r)})}
+$('#statusBtn').addEventListener('click',refreshBrains);
 
 /* ---------- sheet ---------- */
 function openSheetEl(sel,from){closeSheet(true);opener=from||document.activeElement;$('#scrim').classList.add('on');const s=$(sel);s.classList.add('on');s.setAttribute('aria-hidden','false');
@@ -634,12 +644,15 @@ async function botTurn(b,content,opts){
   const key=(cfg.chat&&cfg.chat.message_key)||'message',trace=uid('tr');
   const payload={[key]:(b.prefix||'')+content,conversation_id:conv.id,trace_id:trace,source:'hub_11082',bot:b.id};
   if(groupIds())payload.group=groupIds();
+  else payload.history=conv.messages.slice(0,-1).slice(-10).filter(m=>!m.err).map(m=>({role:m.role,text:String(m.text).slice(0,4000)}));
+  if(b.brain)payload.brain=b.brain;
   const ik=cfg.chat&&cfg.chat.image_key;if(opts.shot&&ik)payload[ik]=opts.shot;
   const t0=performance.now();const {code,j}=await postChat(payload,opts.signal);wait.remove();
   const ms=Math.round(performance.now()-t0),reply=code>=200&&code<300?pickReply(j):null;
   const route=j&&typeof j==='object'&&typeof (j.route||j.department||j.lane)==='string'?(j.route||j.department||j.lane):'';
-  const msg={role:'bot',who:b.label,bot:b.id,ts:Date.now(),retry:reply?null:opts.userText,err:!reply,
-    text:reply||(code===-1?'Stopped.':code===422||code===400?b.label+' didn’t accept the message format. Set chat.message_key in modules.json (see README).':code===502||code===0?'BlueBot (11880) isn’t reachable right now.':b.label+' returned HTTP '+code+'.'),
+  const via=j&&typeof j==='object'&&j.brain&&j.brain!=='bluebot'&&!b.brain?((cfg.brains&&cfg.brains.list&&cfg.brains.list[j.brain]||{}).label||j.brain):'';
+  const msg={role:'bot',who:b.label+(via?' → '+via+' (backup)':''),bot:b.id,ts:Date.now(),retry:reply?null:opts.userText,err:!reply,
+    text:reply||(code===-1?'Stopped.':code===422||code===400?b.label+' didn’t accept the message format. Set chat.message_key in modules.json (see README).':code===502||code===0?'No brain answered. BlueBot: '+((j&&j.bluebot)||'unreachable')+(j&&j.tried?' · tried '+j.tried.map(t=>t.id+' '+t.result).join(', '):'')+'. Add an API key in ~/.lousta/keys.env or start the local model.':b.label+' returned HTTP '+code+'.'),
     raw:reply||code===-1?'':(typeof j==='string'?j:JSON.stringify(j,null,1)).slice(0,600),
     meta:[trace,code>0?'HTTP '+code:'',ms+'ms',route,opts.shot&&!ik?'screenshot not sent (image_key unset)':''].filter(Boolean).join(' · ')};
   conv.messages.push(msg);drawMsg(msg).scrollIntoView({behavior:'smooth',block:'end'});conv.ts=Date.now();saveConvs();

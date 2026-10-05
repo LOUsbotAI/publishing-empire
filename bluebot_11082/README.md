@@ -76,6 +76,28 @@ bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add -
 ```
 Read-only. The only thing it sends is two tiny "Reply with exactly: OK" prompts to the local model on 127.0.0.1. It ends with a PASS/DOWN summary and copies the report to Downloads.
 
+## Multi-brain: BlueBot never stops
+BlueBot (11880) answers first. If it **times out (45 s), errors or returns nothing**, the hub tries the next brain in `modules.json` → `brains.order`:
+
+1. BlueBot
+2. Qwen (local 11437)
+3. llama (local 11438)
+4. Grok
+5. Claude
+6. OpenAI
+7. Gemini
+8. OpenRouter
+9. Groq
+
+The reply is labelled, e.g. **BlueBot → Qwen (local) (backup)** with `FALLBACK · Qwen (local)`.
+
+- **Keys:** `mkdir -p ~/.lousta && cp keys.env.example ~/.lousta/keys.env && chmod 600 ~/.lousta/keys.env`, then fill in only the ones you have (plus the model name for each). Remote brains without a key are skipped. Claude defaults to `claude-opus-5-5`.
+- Keys stay in that file. They're never sent to the browser, written to logs or committed (`.gitignore` covers them). **System → Brains** shows each brain's state as "key set", "needs …" or "local", never the key.
+- Recent chat history goes only to backup brains so they have context. BlueBot receives exactly what it did before.
+- Backup brains are **chat only**: no tools, no commands, no approvals. Their answers are drafts like any other.
+- New bots: **Brain** (suggest-only), **Engineering** and **LouCode** go through BlueBot's departments. **Claude** and **Qwen (local)** talk straight to that brain and fall back if it fails.
+- Turn fallback off with `"brains": {"fallback": false}`.
+
 ## Make BlueBot build the rest (one tap)
 **Build → ▶ Build the rest** sends BlueBot the next ready work orders, up to 5 per tap, one at a time while you watch.
 - It respects order: WO-01 (census) goes first; WO-02 to WO-07 and WO-11 to WO-14 follow once WO-01 is in Review or Done.

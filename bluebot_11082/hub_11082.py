@@ -4,8 +4,9 @@
 Read-only by design, with one exception:
   - binds 127.0.0.1 only
   - answers GET/HEAD; the ONLY write is POST /hub/chat, which forwards the
-    body unchanged to the existing BlueBot chat route (127.0.0.1 .../api/chat).
-    That is the same chat behaviour 1182 already has. Every other write -> 405
+    body to the existing BlueBot chat route (127.0.0.1 .../api/chat).
+    If BlueBot does not answer, brains.py asks the next brain (local Qwen/llama,
+    then API-key providers from ~/.lousta/keys.env). Chat only. Every other write -> 405
   - GET /hub/get?u=<127.0.0.1 url> reads (never writes) services listed in
     modules.json "health", never port 11884, for native modules built by the team
   - serves index.html + modules.json, and /hub/health (server-side GET probes
@@ -22,6 +23,8 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
+
+import brains
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -47,6 +50,20 @@ def local_only(url):
 def load_config():
     with open(os.path.join(HERE, "modules.json"), encoding="utf-8") as f:
         return json.load(f)
+
+
+def has_reply(j):
+    if isinstance(j, str):
+        return bool(j.strip())
+    if not isinstance(j, dict):
+        return False
+    for k in ("reply", "response", "answer", "text", "message", "content", "output", "result"):
+        v = j.get(k)
+        if isinstance(v, str) and v.strip():
+            return True
+        if isinstance(v, dict) and has_reply(v):
+            return True
+    return has_reply(j.get("data")) if isinstance(j.get("data"), dict) else False
 
 
 def probe(item):
@@ -114,6 +131,8 @@ class Hub(BaseHTTPRequestHandler):
                 return self.send(200, fh.read(), "text/javascript; charset=utf-8")
         if path == "/hub/get":
             return self.read_proxy()
+        if path == "/hub/brains":
+            return self.send_json(200, brains.status(load_config()))
         if path == "/hub/status":
             return self.send_json(200, {"version": VERSION, "port": PORT, "dir": HERE, "methods": ["GET", "HEAD", "POST /hub/chat only"],
                                         "execution": "NONE", "production": "LOCKED"})
@@ -145,27 +164,53 @@ class Hub(BaseHTTPRequestHandler):
     def do_POST(self):
         if urlsplit(self.path).path != "/hub/chat":
             return self.refuse()
-        url = load_config().get("chat", {}).get("url", "")
+        cfg = load_config()
+        url = cfg.get("chat", {}).get("url", "")
         if not local_only(url) or urlsplit(url).path != "/api/chat":
             return self.send_json(403, {"error": "CHAT_TARGET_NOT_ALLOWED"})
         n = int(self.headers.get("Content-Length") or 0)
         if n <= 0 or n > MAX_CHAT_BYTES:
             return self.send_json(413, {"error": "BODY_SIZE", "max": MAX_CHAT_BYTES})
-        body = self.rfile.read(n)
         try:
-            json.loads(body)
+            body = json.loads(self.rfile.read(n))
         except ValueError:
             return self.send_json(400, {"error": "BODY_NOT_JSON"})
-        req = urllib.request.Request(url, data=body, method="POST",
-                                     headers={"Content-Type": "application/json", "User-Agent": VERSION})
-        try:
-            with urllib.request.urlopen(req, timeout=180) as r:
-                code, data = r.status, r.read()
-        except urllib.error.HTTPError as e:
-            code, data = e.code, e.read()
-        except Exception as e:
-            return self.send_json(502, {"error": "BLUEBOT_UNREACHABLE", "detail": type(e).__name__})
-        self.send(code, data, "application/json")
+        history = body.pop("history", None)          # only for backup brains; never forwarded to 11880
+        direct = body.pop("brain", None)              # a bot that talks to one brain directly
+        key = cfg.get("chat", {}).get("message_key") or "message"
+        ikey = cfg.get("chat", {}).get("image_key") or ""
+        text = str(body.get(key, ""))
+        image = body.get(ikey) if ikey else body.get("image")
+        bb = cfg.get("brains", {}).get("list", {}).get("bluebot", {})
+        why = "skipped (direct brain)"
+        if not direct:
+            req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
+                                         headers={"Content-Type": "application/json", "User-Agent": VERSION})
+            try:
+                with urllib.request.urlopen(req, timeout=float(bb.get("timeout", 45))) as r:
+                    code, data = r.status, r.read()
+                try:
+                    j = json.loads(data)
+                except ValueError:
+                    j = None
+                if 200 <= code < 300 and has_reply(j if j is not None else data.decode("utf-8", "replace")):
+                    if isinstance(j, dict):
+                        j.setdefault("brain", "bluebot")
+                        return self.send_json(code, j)
+                    return self.send(code, data, "application/json")
+                why = "HTTP %d, no reply" % code
+            except urllib.error.HTTPError as e:
+                why = "HTTP %d" % e.code
+            except Exception as e:
+                why = "timeout" if "timed out" in str(e).lower() or type(e).__name__ == "TimeoutError" else type(e).__name__
+            if cfg.get("brains", {}).get("fallback") is False:
+                return self.send_json(502, {"error": "BLUEBOT_UNAVAILABLE", "bluebot": why})
+        reply, bid, tried = brains.fallback(cfg, text, history, image, only=direct)
+        if reply:
+            label = cfg["brains"]["list"].get(bid, {}).get("label", bid)
+            return self.send_json(200, {"reply": reply, "brain": bid, "route": ("BRAIN · " if direct else "FALLBACK · ") + label,
+                                        "bluebot": why, "tried": tried})
+        return self.send_json(502, {"error": "NO_BRAIN_ANSWERED", "bluebot": why, "tried": tried})
 
     def refuse(self):
         self.send_json(405, {"error": "READ_ONLY_HUB", "allowed": ["GET", "HEAD"]})
