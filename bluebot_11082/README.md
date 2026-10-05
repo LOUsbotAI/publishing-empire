@@ -7,13 +7,18 @@ One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot
 - **Older pages** open full screen in a clean viewer with Back, Reload and Open. You never get two nav bars.
 - Dark and light themes. The phone setting is followed until you tap the moon.
 
-- **Bottom bar:** `Chat | Code | Work | Build | More` (R4.0 rule). Code/Work/Build open LouCode, Workbench and Workspace.
+- **Bottom bar:** `Chat | Code | Work | Build | More` (R4.0 rule). Code/Work open LouCode and Workbench. Build is the team's work queue.
 - **More:** searchable, grouped: Core, Control & Gate, Observe, Business & Control,
   Social & Channels, LOUCORP (Future).
 - **Health pill:** live up/down for 1182, 11880, 11770, 11883, 18082, 18097, 1185, 11902, 6205, 11437, 11438.
 - Each page loads in its own frame **straight from its own port**, so it keeps its own buttons and rules.
   Switching tabs keeps each page alive. Offline services show a placeholder instead of a broken frame.
 - Social and LOUCORP tiles are **PLANNED / NOT CONNECTED**. They load nothing.
+
+## Team build (finish the app with BlueBot)
+See **BUILD_CHARTER.md**. The **Build** tab lists the team's work orders (`work_orders.json`).
+**Hand to BlueBot** puts a brief in the chat box, and you press Send. The team delivers one module file per work order
+as a candidate. You run `bash PROMOTE_MODULE.sh <file> [tile]` to put it live. `modules/services.js` is the reference module.
 
 ## Safety contract
 | Item | Value |
@@ -22,6 +27,8 @@ One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot
 | Methods | GET/HEAD, plus **one** write: `POST /hub/chat`, forwarded unchanged to `127.0.0.1:11880/api/chat` (64 KB max, JSON only). Every other write → 405 |
 | Execution | None. No subprocess, tmux, 11884, `/api/tmux/send`, `run-approved`, `/loukey/auto` |
 | Live 1182 | Untouched |
+| Module reads | `GET /hub/get?u=` only to ports in `health`, never 11884, 2 MB cap, read-only |
+| Team modules | Checked by `tools/check_module.py`, installed only by owner `PROMOTE_MODULE.sh` |
 | Health probes | Server-side GET, 127.0.0.1 URLs only, 2s timeout |
 
 ## Install on the phone

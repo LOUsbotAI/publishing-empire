@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07080d">
 <title>Lousta</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%279%27 fill=%27%238b5cf6%27/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#07080d;--bg2:#0d0f17;--card:rgba(255,255,255,.045);--card2:rgba(255,255,255,.075);
@@ -165,6 +166,25 @@ body.viewing .nav{display:none}
 .locks{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
 .locks span{font:10.5px ui-monospace,monospace;padding:5px 8px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--dim)}
 
+/* native modules + build queue */
+.native{position:absolute;inset:0;overflow:auto;padding:16px 16px 40px;background:var(--bg);display:none}
+.native.on{display:block}
+.wo{display:grid;gap:8px;text-align:left}
+.wo .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wo .id{font:12px ui-monospace,monospace;color:var(--faint)}
+.wo .t{font-size:16px;font-weight:620;letter-spacing:-.01em}
+.wo p{margin:0;color:var(--dim);font-size:13.5px}
+.pill{font-size:10.5px;font-weight:650;letter-spacing:.06em;padding:4px 8px;border-radius:999px;background:var(--card2);color:var(--dim)}
+.pill.READY{background:color-mix(in srgb,var(--a2) 22%,transparent);color:var(--text)}
+.pill.IN_PROGRESS{background:color-mix(in srgb,var(--warn) 25%,transparent);color:var(--text)}
+.pill.REVIEW{background:color-mix(in srgb,var(--a1) 28%,transparent);color:var(--text)}
+.pill.DONE{background:color-mix(in srgb,var(--up) 25%,transparent);color:var(--text)}
+.pill.OWNER{background:color-mix(in srgb,var(--down) 22%,transparent);color:var(--text)}
+.wo .acts{display:flex;gap:8px;margin-top:4px}
+.wo details{font-size:13px;color:var(--dim)}.wo summary{cursor:pointer;color:var(--text)}
+.wo pre{white-space:pre-wrap;font:12px/1.45 ui-monospace,monospace;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0 0}
+.stack{display:grid;gap:10px}
+.prog{display:flex;gap:10px;align-items:center;color:var(--dim);font-size:13px}
 @media (min-width:900px){
   .bento{grid-template-columns:repeat(4,1fr)}
   .hero{grid-column:span 2}
@@ -216,6 +236,16 @@ body.viewing .nav{display:none}
   </div>
 </main>
 
+<main class="view" id="buildView" aria-label="Build">
+  <div class="wrap">
+    <h1>Build</h1>
+    <p class="sub">The team’s work orders for finishing this app. Hand one to BlueBot; you review and promote the result.</p>
+    <div class="card prog" id="buildProg"></div>
+    <div class="sec"><h2>Work orders</h2><span id="woCount"></span></div>
+    <div class="stack" id="woList"></div>
+  </div>
+</main>
+
 <section class="viewer" id="viewer" aria-label="Page viewer" aria-hidden="true">
   <div class="vbar">
     <button class="iconbtn" id="vBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -254,7 +284,7 @@ let cfg={modules:[]},health={},tab='chat',opener=null;
 const frames=new Map();
 const store=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const recall=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
-const planned=m=>m.status==='PLANNED'||!m.url;
+const planned=m=>m.status==='PLANNED'||(!m.url&&!m.native);
 const portOf=u=>{try{const x=new URL(u);return +(x.port||80)}catch(e){return null}};
 const isLocal=u=>{try{const x=new URL(u);return x.protocol==='http:'&&['127.0.0.1','localhost'].includes(x.hostname)}catch(e){return false}};
 const stateOf=m=>planned(m)?'PLANNED':((health[portOf(m.url)]||{}).state||'UNKNOWN');
@@ -267,7 +297,7 @@ $('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(m
   const nx=cur==='light'?'dark':'light';document.documentElement.dataset.theme=nx;store('lousta.theme',nx)};
 
 /* nav: Chat | Code | Work | Build | More */
-const NAV=[['chat','Chat'],['code','Code','loucode'],['work','Work','workbench'],['build','Build','workspace'],['more','More']];
+const NAV=[['chat','Chat'],['code','Code','loucode'],['work','Work','workbench'],['build','Build'],['more','More']];
 NAV.forEach(([id,label,mod])=>{
   const b=el('button','',svg(id)+'<span></span>');b.lastChild.textContent=label;b.dataset.tab=id;
   b.onclick=()=>mod?openPage(mod,b):go(id);$('#nav').appendChild(b)});
@@ -275,7 +305,8 @@ function go(id){
   closeViewer(true);tab=id;
   $$('.view').forEach(v=>v.classList.toggle('on',v.id===id+'View'));
   $('#composer').hidden=id!=='chat';
-  $('#viewName').textContent=id==='chat'?'Chat':'Everything';
+  $('#viewName').textContent={chat:'Chat',more:'Everything',build:'Build'}[id]||'';
+  if(id==='build')renderBuild();
   markNav(id);
 }
 function markNav(id){$$('#nav button').forEach(b=>b.dataset.tab===id?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'))}
@@ -342,12 +373,13 @@ let vOpener=null,current=null;
 function openPage(id,from,force){
   const m=cfg.modules.find(x=>x.id===id);if(!m)return;
   current=id;if(from)vOpener=from;
-  $('#vTitle').textContent=m.label;$('#vUrl').textContent=planned(m)?'PLANNED / NOT CONNECTED':m.url;
-  $('#vOpen').hidden=planned(m);if(!planned(m))$('#vOpen').href=m.url;
-  frames.forEach(f=>f.classList.remove('on'));
+  $('#vTitle').textContent=m.label;$('#vUrl').textContent=planned(m)?'PLANNED / NOT CONNECTED':m.native?'native module · '+m.native+'.js':m.url;
+  $('#vOpen').hidden=planned(m)||!m.url;if(m.url)$('#vOpen').href=m.url;
+  frames.forEach(f=>f.classList.remove('on'));stopNative();
   const show=(t,p,retry)=>{$('#vMsgT').textContent=t;$('#vMsgP').textContent=p;$('#vForce').hidden=!retry;$('#vMsg').hidden=false};
   $('#vMsg').hidden=true;
   if(planned(m))show(m.label+' · Planned',(m.category||'This')+' space is reserved. Nothing is installed, connected or authorised yet. It goes live only after real runtime proof and your approval.',false);
+  else if(m.native)openNative(m,show);
   else if(!isLocal(m.url))show('Blocked','Only 127.0.0.1 pages can open here.',false);
   else if(!frames.has(id)&&stateOf(m)==='DOWN'&&!force)show(m.label+' is offline','Port '+portOf(m.url)+' isn’t answering. Start that service, then try again.',true);
   else{let f=frames.get(id);if(!f){f=document.createElement('iframe');f.title=m.label;f.src=m.url;
@@ -358,12 +390,12 @@ function openPage(id,from,force){
 }
 function closeViewer(silent){
   const v=$('#viewer');if(!v.classList.contains('on'))return;
-  v.classList.remove('on');v.setAttribute('aria-hidden','true');document.body.classList.remove('viewing');current=null;
+  v.classList.remove('on');v.setAttribute('aria-hidden','true');document.body.classList.remove('viewing');current=null;stopNative();
   $('#composer').hidden=tab!=='chat';markNav(tab);
   if(!silent&&vOpener&&vOpener.focus)vOpener.focus();vOpener=null;
 }
 $('#vBack').onclick=()=>closeViewer();
-$('#vReload').onclick=()=>{const f=frames.get(current);if(f)f.src=f.src;else if(current)openPage(current,null,true)};
+$('#vReload').onclick=()=>{const m=cfg.modules.find(x=>x.id===current);if(m&&m.native)return openPage(current,null,true);const f=frames.get(current);if(f)f.src=f.src;else if(current)openPage(current,null,true)};
 $('#vForce').onclick=()=>openPage(current,null,true);
 
 document.addEventListener('keydown',e=>{
@@ -407,9 +439,59 @@ $('#composer').addEventListener('submit',async e=>{
   d.append(txt('span','meta',[trace,code?'HTTP '+code:'',ms+'ms',typeof route==='string'?route:''].filter(Boolean).join(' · ')));
 });
 
+/* ---------- native module contract (team-built screens) ----------
+   A module file /modules/<name>.js calls:
+     LoustaHub.register({id:'<name>', title:'…', render(el, api){ … }})
+   api.get(url)      -> GET a 127.0.0.1 service through the hub (read-only) -> {ok,status,data}
+   api.health()      -> latest service health list
+   api.every(ms,fn)  -> polling that stops when the screen closes
+   api.ask(text)     -> puts text in the chat box for Louie to send (never sends)
+   api.el(tag,cls,text) -> safe element helper (text, not HTML)
+   Modules never fetch directly, never POST, never touch 11884. */
+const registry={},timers=[];let nativeEl=null;
+window.LoustaHub=Object.freeze({version:'HUB_MODULE_V1',register(def){
+  if(!def||!/^[a-z0-9_]{1,40}$/.test(def.id)||typeof def.render!=='function')return console.warn('LoustaHub: bad module',def);
+  registry[def.id]=def;window.dispatchEvent(new CustomEvent('lousta:module',{detail:def.id}))}});
+const api=Object.freeze({
+  async get(url){try{const r=await fetch('/hub/get?u='+encodeURIComponent(url),{cache:'no-store'});const raw=await r.text();
+    let data=raw;try{data=JSON.parse(raw)}catch(_){}return {ok:r.ok,status:r.status,data}}catch(e){return {ok:false,status:0,data:null}}},
+  health:()=>Object.values(health),
+  every(ms,fn){const t=setInterval(fn,Math.max(1000,ms|0));timers.push(t);return t},
+  ask(text){go('chat');input.value=String(text||'');grow();input.focus()},
+  el:(t,c,s)=>txt(t,c,s==null?'':String(s))});
+function stopNative(){while(timers.length)clearInterval(timers.pop());if(nativeEl){nativeEl.remove();nativeEl=null}}
+function loadScript(name){return new Promise((ok,bad)=>{if(registry[name])return ok();
+  const s=document.createElement('script');s.src='/modules/'+name+'.js';s.onload=()=>ok();s.onerror=()=>bad();document.head.appendChild(s)})}
+async function openNative(m,show){
+  const box=el('div','native on');$('#frames').appendChild(box);nativeEl=box;
+  try{await loadScript(m.native)}catch(e){box.remove();nativeEl=null;return show(m.label+' module missing','modules/'+m.native+'.js was not found. Promote it with PROMOTE_MODULE.sh.',false)}
+  const def=registry[m.native];if(!def){box.remove();nativeEl=null;return show('Module did not register',m.native+'.js loaded but never called LoustaHub.register.',false)}
+  try{def.render(box,api)}catch(e){box.textContent='';box.append(txt('h3','',m.label+' crashed'),txt('pre','',String(e&&e.message||e)))}
+}
+
+/* ---------- Build: the team's work orders ---------- */
+let wos=null;
+async function renderBuild(){
+  if(!wos){try{wos=await (await fetch('/work_orders.json',{cache:'no-store'})).json()}catch(e){wos={orders:[]}}}
+  const list=$('#woList');list.textContent='';const os=wos.orders||[];
+  const done=os.filter(o=>o.status==='DONE').length;
+  const p=$('#buildProg');p.textContent='';const bar=el('div','bar','<i></i>');bar.style.flex='1';bar.firstChild.style.width=(os.length?done/os.length*100:0)+'%';
+  p.append(txt('span','',done+' of '+os.length+' done'),bar);
+  $('#woCount').textContent=os.filter(o=>o.status==='READY').length+' ready';
+  os.forEach(o=>{
+    const c=el('div','card wo');const row=el('div','row');
+    row.append(txt('span','id',o.id),txt('span','pill '+(o.status||''),(o.status||'').replace('_',' ')),txt('span','pill',o.who||'TEAM'));
+    c.append(row,txt('div','t',o.title),txt('p','',o.summary||''));
+    if(o.depends&&o.depends.length)c.append(txt('p','','After: '+o.depends.join(', ')));
+    const d=el('details');d.append(txt('summary','','Full brief'),txt('pre','',o.brief||''));c.append(d);
+    if(o.who!=='OWNER'&&o.status!=='DONE'){const a=el('div','acts');const b=txt('button','btn pri','Hand to BlueBot');
+      b.onclick=()=>api.ask(o.brief);a.append(b);c.append(a)}
+    list.appendChild(c)});
+}
+
 /* ---------- boot ---------- */
 (async()=>{
-  try{cfg=await (await fetch('/modules.json',{cache:'no-store'})).json();cfg.modules=(cfg.modules||[]).filter(m=>m&&m.id&&(m.url||m.status==='PLANNED'))}catch(e){}
+  try{cfg=await (await fetch('/modules.json',{cache:'no-store'})).json();cfg.modules=(cfg.modules||[]).filter(m=>m&&m.id&&(m.url||m.native||m.status==='PLANNED'))}catch(e){}
   renderMore();go('chat');await refresh();setInterval(refresh,15000);
 })();
 })();

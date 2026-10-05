@@ -8,15 +8,29 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$HOME/bluebits/empire_director_v1"
 DEST="$ROOT/supervised_dev/hub_11082_v1/CANDIDATE_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$DEST" || { echo "HOLD=CANNOT_CREATE_DEST"; exit 1; }
-cp "$SRC/hub_11082.py" "$SRC/index.html" "$SRC/modules.json" "$SRC/START_11082.sh" "$DEST/" || { echo "HOLD=COPY_FAILED"; exit 1; }
-chmod +x "$DEST/START_11082.sh"
+cp "$SRC/hub_11082.py" "$SRC/index.html" "$SRC/modules.json" "$SRC/work_orders.json" "$SRC/START_11082.sh" "$SRC/PROMOTE_MODULE.sh" "$SRC/BUILD_CHARTER.md" "$DEST/" || { echo "HOLD=COPY_FAILED"; exit 1; }
+mkdir -p "$DEST/modules" "$DEST/tools" && cp "$SRC/modules/"*.js "$DEST/modules/" && cp "$SRC/tools/check_module.py" "$DEST/tools/" || { echo "HOLD=COPY_FAILED"; exit 1; }
+mkdir -p "$ROOT/supervised_dev/hub_modules"
+chmod +x "$DEST/START_11082.sh" "$DEST/PROMOTE_MODULE.sh"
+for M in "$DEST/modules/"*.js; do python3 "$DEST/tools/check_module.py" "$M" >/dev/null && echo "MODULE_CHECK=PASS $(basename "$M")" || { echo "HOLD=MODULE_CHECK_FAILED $M"; exit 1; }; done
 python3 -c "import ast,sys;ast.parse(open(sys.argv[1]).read())" "$DEST/hub_11082.py" && echo "AST=PASS" || { echo "HOLD=AST_FAIL"; exit 1; }
-python3 -c "import json,sys;json.load(open(sys.argv[1]))" "$DEST/modules.json" && echo "MODULES_JSON=PASS" || { echo "HOLD=JSON_FAIL"; exit 1; }
-if grep -nE 'subprocess|os\.system|Popen|11884|tmux/send|run-approved|/loukey/auto' "$DEST/hub_11082.py" "$DEST/index.html" | grep -v '^[^:]*:[0-9]*:  - no proxying'; then
-  echo "HOLD=EXECUTION_PATH_FOUND"; exit 1
-fi
+python3 -c "import json,sys;[json.load(open(a)) for a in sys.argv[1:]]" "$DEST/modules.json" "$DEST/work_orders.json" && echo "JSON=PASS" || { echo "HOLD=JSON_FAIL"; exit 1; }
+# real execution primitives in the server (docstring excluded), and any browser write other than /hub/chat
+if python3 - "$DEST/hub_11082.py" <<'PY'
+import ast, sys
+t = ast.parse(open(sys.argv[1]).read())
+bad = [n.names[0].name if isinstance(n, ast.Import) else n.module for n in ast.walk(t)
+       if isinstance(n, (ast.Import, ast.ImportFrom)) and (n.names[0].name if isinstance(n, ast.Import) else n.module) in ("subprocess", "pty", "socket", "shutil", "ctypes")]
+calls = [n.func.attr for n in ast.walk(t) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in ("system", "popen", "execv", "execvp", "spawnv", "remove", "unlink", "rmtree")]
+print("SERVER_EXEC_SCAN=" + ("HOLD " + ",".join(bad + calls) if bad or calls else "CLEAN"))
+sys.exit(1 if bad or calls else 0)
+PY
+then :; else echo "HOLD=EXECUTION_PATH_FOUND"; exit 1; fi
+W=$(grep -noE "method:'(POST|PUT|PATCH|DELETE)'[^)]*" "$DEST/index.html" | grep -c . )
+C=$(grep -c "fetch('/hub/chat',{method:'POST'" "$DEST/index.html")
+if [ "$W" != "1" ] || [ "$C" != "1" ]; then echo "HOLD=UNEXPECTED_BROWSER_WRITE ($W writes)"; exit 1; fi
 echo "NO_EXECUTION_PATH=PASS"
-( cd "$DEST" && sha256sum hub_11082.py index.html modules.json START_11082.sh > SHA256SUMS.txt && cat SHA256SUMS.txt )
+( cd "$DEST" && sha256sum hub_11082.py index.html modules.json work_orders.json START_11082.sh PROMOTE_MODULE.sh tools/check_module.py modules/*.js > SHA256SUMS.txt && cat SHA256SUMS.txt )
 C=$(curl -s -o /dev/null --max-time 2 -w '%{http_code}' http://127.0.0.1:11082/ 2>/dev/null || true)
 [ "${C:-000}" = "000" ] && echo "PORT_11082=FREE" || echo "PORT_11082=IN_USE_HTTP_$C (check what owns it before starting)"
 printf '\033[32mPASS=HUB_11082_STAGED\033[0m\n'

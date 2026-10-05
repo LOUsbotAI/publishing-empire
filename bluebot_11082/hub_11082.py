@@ -6,6 +6,8 @@ Read-only by design, with one exception:
   - answers GET/HEAD; the ONLY write is POST /hub/chat, which forwards the
     body unchanged to the existing BlueBot chat route (127.0.0.1 .../api/chat).
     That is the same chat behaviour 1182 already has. Every other write -> 405
+  - GET /hub/get?u=<127.0.0.1 url> reads (never writes) services listed in
+    modules.json "health", never port 11884, for native modules built by the team
   - serves index.html + modules.json, and /hub/health (server-side GET probes
     of 127.0.0.1 URLs listed in modules.json)
   - no proxying of actions, no subprocess, no tmux, no 11884
@@ -13,6 +15,7 @@ Pages are shown in iframes straight from their own ports, so each page keeps
 its own existing rules and buttons.
 """
 import json
+import re
 import os
 import sys
 import time
@@ -20,16 +23,20 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("HUB_PORT", "11082"))
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/index.html": ("index.html", "text/html; charset=utf-8"),
-          "/modules.json": ("modules.json", "application/json")}
-VERSION = "BLUEBOT_HUB_11082_V2"
+          "/modules.json": ("modules.json", "application/json"),
+          "/work_orders.json": ("work_orders.json", "application/json")}
+VERSION = "BLUEBOT_HUB_11082_V3"
 MAX_CHAT_BYTES = 64 * 1024
+MAX_READ_BYTES = 2 * 1024 * 1024
+NEVER_PORTS = {11884}          # owner-manual input: never readable or reachable through the hub
+MODULE_RE = re.compile(r"^/modules/([a-z0-9_]{1,40})\.js$")
 
 
 def local_only(url):
@@ -98,12 +105,42 @@ class Hub(BaseHTTPRequestHandler):
             return self.send_json(200, {"version": VERSION, "ts": int(time.time()),
                                         "production": "LOCKED", "execution": "NONE",
                                         "services": results})
+        mm = MODULE_RE.match(path)
+        if mm:
+            f = os.path.join(HERE, "modules", mm.group(1) + ".js")
+            if not os.path.isfile(f):
+                return self.send_json(404, {"error": "MODULE_NOT_FOUND"})
+            with open(f, "rb") as fh:
+                return self.send(200, fh.read(), "text/javascript; charset=utf-8")
+        if path == "/hub/get":
+            return self.read_proxy()
         if path == "/hub/status":
             return self.send_json(200, {"version": VERSION, "port": PORT, "methods": ["GET", "HEAD", "POST /hub/chat only"],
                                         "execution": "NONE", "production": "LOCKED"})
         self.send_json(404, {"error": "NOT_FOUND"})
 
     do_HEAD = do_GET
+
+    def read_proxy(self):
+        """GET-only read of another local service, for native modules (avoids CORS)."""
+        q = parse_qs(urlsplit(self.path).query)
+        url = (q.get("u") or [""])[0]
+        p = urlsplit(url)
+        allowed = {int(h.get("port")) for h in load_config().get("health", []) if h.get("port")}
+        if not local_only(url) or p.port is None or p.port in NEVER_PORTS or p.port not in allowed:
+            return self.send_json(403, {"error": "READ_TARGET_NOT_ALLOWED", "allowed_ports": sorted(allowed - NEVER_PORTS)})
+        req = urllib.request.Request(url, method="GET", headers={"User-Agent": VERSION})
+        try:
+            with urllib.request.urlopen(req, timeout=5) as r:
+                code, data, ctype = r.status, r.read(MAX_READ_BYTES + 1), r.headers.get("Content-Type", "text/plain")
+        except urllib.error.HTTPError as e:
+            code, data, ctype = e.code, e.read(MAX_READ_BYTES + 1), "application/json"
+        except Exception as e:
+            return self.send_json(502, {"error": "UPSTREAM_UNREACHABLE", "detail": type(e).__name__})
+        if len(data) > MAX_READ_BYTES:
+            return self.send_json(413, {"error": "UPSTREAM_TOO_LARGE"})
+        ctype = ctype if ctype.split(";")[0].strip() in ("application/json", "text/plain") else "text/plain; charset=utf-8"
+        self.send(code, data, ctype)
 
     def do_POST(self):
         if urlsplit(self.path).path != "/hub/chat":

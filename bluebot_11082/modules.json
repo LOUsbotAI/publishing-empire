@@ -27,11 +27,11 @@
   },
   {
    "id": "workspace",
-   "label": "Build",
+   "label": "Workspace",
    "icon": "▤",
    "url": "http://127.0.0.1:1182/workspace.html",
    "category": "Core",
-   "primary": true
+   "primary": false
   },
   {
    "id": "command",
@@ -48,6 +48,13 @@
    "url": "http://127.0.0.1:1182/approvalpad.html",
    "primary": false,
    "category": "Control & Gate"
+  },
+  {
+   "id": "services",
+   "label": "Services",
+   "icon": "◉",
+   "category": "Observe",
+   "native": "services"
   },
   {
    "id": "termux",
