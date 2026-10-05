@@ -15,6 +15,21 @@ One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot
   Switching tabs keeps each page alive. Offline services show a placeholder instead of a broken frame.
 - Social and LOUCORP tiles are **PLANNED / NOT CONNECTED**. They load nothing.
 
+## Step 0: census (read-only, run this first)
+```bash
+bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_CENSUS.sh
+```
+It collects:
+- live ports (including 11882)
+- tmux windows
+- how each service is launched
+- model files
+- safety state (WO-00)
+- the 11880 chat field and risky routes
+- your Downloads BlueBot projects
+
+It changes nothing and never touches 11884. Secrets are masked. The report is copied to Downloads, ready to upload.
+
 ## Team build (finish the app with BlueBot)
 See **BUILD_CHARTER.md**. The **Build** tab lists the team's work orders (`work_orders.json`).
 **Hand to BlueBot** puts a brief in the chat box, and you press Send. The team delivers one module file per work order

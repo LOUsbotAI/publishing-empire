@@ -129,6 +129,13 @@
    "primary": false
   },
   {
+   "id": "directory",
+   "label": "Directory",
+   "icon": "☰",
+   "category": "Business & Control",
+   "url": "http://127.0.0.1:11882/"
+  },
+  {
    "id": "honeycomb",
    "label": "Honeycomb",
    "icon": "⬡",
@@ -366,6 +373,11 @@
    "port": 11880,
    "role": "BlueBot",
    "url": "http://127.0.0.1:11880/api/status"
+  },
+  {
+   "port": 11882,
+   "role": "Directory",
+   "url": "http://127.0.0.1:11882/"
   },
   {
    "port": 11770,
