@@ -175,6 +175,7 @@ body.viewing .nav{display:none}
 .tool svg{width:19px;height:19px}.tool[aria-pressed="true"]{color:var(--text);background:var(--card2)}
 .tool.rec{color:#fff;background:var(--down);animation:b 1.2s infinite}
 .botchip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:999px;background:var(--card2);font-size:13px;font-weight:600}
+.botchip{white-space:nowrap;max-width:38vw;min-width:0;flex:0 1 auto}.botchip #botName{overflow:hidden;text-overflow:ellipsis}
 .attach{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
 .attach .a{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 4px;border:1px solid var(--line);border-radius:12px;font-size:12px;color:var(--dim)}
 .attach img{width:44px;height:44px;object-fit:cover;border-radius:8px}
@@ -205,6 +206,12 @@ body.viewing .nav{display:none}
 .runlog .r{display:flex;gap:8px;align-items:center}
 .chk{display:flex;gap:10px;align-items:center;padding:8px 0;font-size:14px}
 .chk input{width:20px;height:20px;accent-color:var(--a1)}
+.talkbar{position:fixed;left:12px;right:12px;max-width:760px;margin:0 auto;z-index:16;bottom:calc(var(--nav) + 150px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:16px;background:var(--grad);color:#fff;font-weight:600;box-shadow:var(--shadow)}
+.talkbar .mini{margin-left:auto;background:rgba(255,255,255,.2);border:0;color:#fff}
+.pulse{width:10px;height:10px;border-radius:50%;background:#fff;animation:b 1s infinite}
+#talkBtn[aria-pressed="true"]{color:#fff;background:var(--grad)}
+.cont{justify-content:center}
 /* native modules + build queue */
 .native{position:absolute;inset:0;overflow:auto;padding:16px 16px 40px;background:var(--bg);display:none}
 .native.on{display:block}
@@ -259,12 +266,14 @@ body.viewing .nav{display:none}
     <div class="msgs" id="msgs" aria-live="polite"></div>
   </div>
 </main>
+<div class="talkbar" id="talkBar" hidden role="status" aria-live="polite"><span class="pulse"></span><span id="talkState">Listening…</span><button type="button" class="mini" id="talkStop">End talk</button></div>
 <form class="composer" id="composer" autocomplete="off">
   <div class="attach" id="attach" hidden></div>
   <textarea id="input" rows="1" placeholder="Message BlueBot…" aria-label="Message"></textarea>
   <div class="row">
     <button type="button" class="botchip" id="botBtn" aria-haspopup="dialog" aria-label="Choose chatbot"><span id="botIc">♣</span><span id="botName">BlueBot</span> ▾</button>
     <button type="button" class="tool" id="micBtn" aria-label="Dictate (voice to text)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button type="button" class="tool" id="talkBtn" aria-label="Talk mode: hands-free voice conversation" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></button>
     <button type="button" class="tool" id="shotBtn" aria-label="Share screen snapshot or screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
     <button type="button" class="tool" id="termBtn" aria-label="Live Termux"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 17l6-5-6-5M12 19h8"/></svg></button>
     <button type="button" class="tool" id="chatsBtn" aria-label="Conversations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
@@ -495,8 +504,9 @@ const saveConvs=()=>store('lousta.convs',JSON.stringify(convs.slice(0,40).map(c=
 const uid=p=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function bot(){return BOTS().find(b=>b.id===(conv&&conv.bot))||BOTS()[0]}
 function newConv(botId){conv={id:uid('conv'),title:'New chat',bot:botId||(conv?conv.bot:BOTS()[0].id),messages:[],ts:Date.now()};convs.unshift(conv);renderConv();saveConvs()}
-function setBot(id){if(!conv)newConv(id);conv.bot=id;const b=bot();$('#botIc').textContent=b.icon||'•';$('#botName').textContent=b.label;
-  input.placeholder='Message '+b.label+'…';saveConvs()}
+function setBot(id,keepGroup){if(!conv)newConv(id);conv.bot=id;if(!keepGroup)delete conv.group;const b=bot(),g=groupIds();
+  $('#botIc').textContent=g?'👥':(b.icon||'•');$('#botName').textContent=g?g.map(i=>(BOTS().find(x=>x.id===i)||{}).label).join(' + '):b.label;
+  input.placeholder=g?'Message the group…':'Message '+b.label+'…';saveConvs()}
 function grow(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,160)+'px';$('#sendBtn').disabled=!busy&&!input.value.trim()&&!shot}
 input.addEventListener('input',grow);
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();$('#composer').requestSubmit()}});
@@ -545,7 +555,7 @@ function drawMsg(m){
     d.append(acts)}
   msgs.appendChild(d);$('#empty').hidden=true;return d}
 function renderConv(){msgs.textContent='';$('#empty').hidden=!!(conv&&conv.messages.length);(conv?conv.messages:[]).forEach(drawMsg);
-  if(conv)setBot(conv.bot);const last=msgs.lastElementChild;if(last)last.scrollIntoView({block:'end'})}
+  if(conv)setBot(conv.bot,true);const last=msgs.lastElementChild;if(last)last.scrollIntoView({block:'end'})}
 
 function pickReply(j){
   if(typeof j==='string')return j.trim()||null;if(!j||typeof j!=='object')return null;
@@ -559,23 +569,46 @@ async function postChat(payload,signal){
     const raw=await r.text();let j=raw;try{j=JSON.parse(raw)}catch(_){}return {code:r.status,j}}
   catch(e){return {code:e.name==='AbortError'?-1:0,j:{error:e.name==='AbortError'?'STOPPED_BY_OWNER':'HUB_UNREACHABLE'}}}}
 
-async function ask(text,opts){
-  opts=opts||{};if(!conv)newConv();const b=opts.bot?BOTS().find(x=>x.id===opts.bot)||bot():bot();
-  const mine={role:'me',text,shot:opts.shot||null,ts:Date.now()};conv.messages.push(mine);drawMsg(mine).scrollIntoView({behavior:'smooth',block:'end'});
-  if(conv.title==='New chat')conv.title=text.slice(0,48);
+function groupIds(){return conv&&conv.group&&conv.group.length>1?conv.group:null}
+function groupPrompt(b,mode){
+  const ids=groupIds()||[b.id];const names=ids.map(i=>(BOTS().find(x=>x.id===i)||{}).label).filter(Boolean);
+  const tr=conv.messages.slice(-10).map(m=>(m.role==='me'?'Louie':(m.who||'Bot'))+': '+String(m.text).slice(0,700)).join('\n');
+  return '[GROUP CHAT · participants: Louie (owner), '+names.join(', ')+']\nRecent conversation:\n'+tr+'\n\nYou are '+b.label+'. '+
+    (mode==='continue'?'Continue the discussion: respond to what the other bots just said, add something new, keep it short.'
+                      :'Reply to Louie\'s latest message in your own voice, briefly. You may build on or challenge the other bots; do not repeat them.')+
+    ' Drafts and advice only. Nothing runs without Louie\'s Gate.'}
+async function botTurn(b,content,opts){
   const wait=el('div','msg bot','<span class="who"></span><span class="typing"><i></i><i></i><i></i></span>');wait.firstChild.textContent=b.label;msgs.appendChild(wait);wait.scrollIntoView({behavior:'smooth',block:'end'});
   const key=(cfg.chat&&cfg.chat.message_key)||'message',trace=uid('tr');
-  const payload={[key]:(b.prefix||'')+text,conversation_id:conv.id,trace_id:trace,source:'hub_11082',bot:b.id};
+  const payload={[key]:(b.prefix||'')+content,conversation_id:conv.id,trace_id:trace,source:'hub_11082',bot:b.id};
+  if(groupIds())payload.group=groupIds();
   const ik=cfg.chat&&cfg.chat.image_key;if(opts.shot&&ik)payload[ik]=opts.shot;
   const t0=performance.now();const {code,j}=await postChat(payload,opts.signal);wait.remove();
   const ms=Math.round(performance.now()-t0),reply=code>=200&&code<300?pickReply(j):null;
   const route=j&&typeof j==='object'&&typeof (j.route||j.department||j.lane)==='string'?(j.route||j.department||j.lane):'';
-  const msg={role:'bot',who:b.label,ts:Date.now(),retry:reply?null:text,err:!reply,
+  const msg={role:'bot',who:b.label,bot:b.id,ts:Date.now(),retry:reply?null:opts.userText,err:!reply,
     text:reply||(code===-1?'Stopped.':code===422||code===400?b.label+' didn’t accept the message format. Set chat.message_key in modules.json (see README).':code===502||code===0?'BlueBot (11880) isn’t reachable right now.':b.label+' returned HTTP '+code+'.'),
     raw:reply||code===-1?'':(typeof j==='string'?j:JSON.stringify(j,null,1)).slice(0,600),
     meta:[trace,code>0?'HTTP '+code:'',ms+'ms',route,opts.shot&&!ik?'screenshot not sent (image_key unset)':''].filter(Boolean).join(' · ')};
   conv.messages.push(msg);drawMsg(msg).scrollIntoView({behavior:'smooth',block:'end'});conv.ts=Date.now();saveConvs();
-  return {ok:!!reply,code,text:msg.text}}
+  return {ok:!!reply,code,text:msg.text,bot:b.id,who:b.label}}
+async function round(opts,mode){
+  const ids=opts.bot?[opts.bot]:(groupIds()||[bot().id]);const out=[];
+  for(const id of ids){const b=BOTS().find(x=>x.id===id);if(!b)continue;
+    const content=ids.length>1?groupPrompt(b,mode):opts.userText;
+    const r=await botTurn(b,content,opts);out.push(r);if(r.code===-1)break}
+  if(ids.length>1&&!out.some(r=>r.code===-1))drawContinue();
+  return out}
+async function ask(text,opts){
+  opts=opts||{};if(!conv)newConv();opts.userText=text;
+  const old=msgs.querySelector('.cont');if(old)old.remove();
+  const mine={role:'me',text,shot:opts.shot||null,ts:Date.now()};conv.messages.push(mine);drawMsg(mine).scrollIntoView({behavior:'smooth',block:'end'});
+  if(conv.title==='New chat')conv.title=text.slice(0,48);
+  const out=await round(opts,'reply');const last=out[out.length-1]||{ok:false,code:0,text:''};
+  return {...last,ok:out.length>0&&out.every(r=>r.ok),replies:out}}
+function drawContinue(){const d=el('div','msgacts cont');const b=txt('button','mini','↻ Let them continue');
+  b.onclick=async()=>{if(busy)return;d.remove();setBusy(true);ctrl=new AbortController();const out=await round({signal:ctrl.signal},'continue');ctrl=null;setBusy(false);if(talk)talkSpeak(out)};
+  d.append(b);msgs.appendChild(d)}
 
 let busy=false;
 function setBusy(v){busy=v;const s=$('#sendBtn');s.classList.toggle('stop',v);s.setAttribute('aria-label',v?'Stop':'Send');
@@ -587,12 +620,18 @@ $('#composer').addEventListener('submit',async e=>{
   await ask(text||'(screenshot)',{shot:s2,signal:ctrl.signal});ctrl=null;setBusy(false)});
 
 /* bots + conversations sheets */
-function renderBots(){const L=$('#botList');L.textContent='';BOTS().forEach(b=>{const li=el('button','li');li.setAttribute('aria-current',String(b.id===bot().id));
+function renderBots(){const L=$('#botList');L.textContent='';const g=groupIds();
+  const gs=el('div','card');gs.append(txt('b','','Group chat'),txt('p','sub','Pick two or more. Each bot answers in turn and sees the others.'));
+  BOTS().forEach(b=>{const l=el('label','chk');const c=el('input');c.type='checkbox';c.value=b.id;c.checked=!!(g&&g.includes(b.id));l.append(c,txt('span','',(b.icon||'')+' '+b.label));gs.append(l)});
+  const go2=txt('button','btn pri','Start group chat');go2.onclick=()=>{const ids=[...gs.querySelectorAll('input:checked')].map(c=>c.value);
+    if(ids.length<2){go2.textContent='Pick at least 2';return}newConv(ids[0]);conv.group=ids;conv.title='Group · '+ids.map(i=>(BOTS().find(x=>x.id===i)||{}).label).join(' + ');setBot(ids[0],true);saveConvs();closeSheet();input.focus()};
+  gs.append(go2);L.append(txt('p','sub','One bot'));
+  BOTS().forEach(b=>{const li=el('button','li');li.setAttribute('aria-current',String(!g&&b.id===bot().id));
   const mid=el('div');mid.append(txt('b','',b.label),txt('small','',(b.prefix?b.prefix.trim()+' · ':'')+(b.desc||'')));
-  li.append(txt('span','ic',b.icon||'•'),mid,txt('span','',b.id===bot().id?'✓':''));li.onclick=()=>{setBot(b.id);closeSheet()};L.append(li)})}
+  li.append(txt('span','ic',b.icon||'•'),mid,txt('span','',!g&&b.id===bot().id?'✓':''));li.onclick=()=>{setBot(b.id);closeSheet()};L.append(li)});L.append(gs)}
 $('#botBtn').onclick=e=>{renderBots();openSheetEl('#botSheet',e.currentTarget)};
 function renderConvList(){const L=$('#convList');L.textContent='';convs.forEach(c=>{const li=el('button','li');li.setAttribute('aria-current',String(conv&&c.id===conv.id));
-  const mid=el('div');const b=BOTS().find(x=>x.id===c.bot)||BOTS()[0];mid.append(txt('b','',c.title),txt('small','',b.label+' · '+c.messages.length+' messages · '+new Date(c.ts).toLocaleString()));
+  const mid=el('div');const b=BOTS().find(x=>x.id===c.bot)||BOTS()[0];mid.append(txt('b','',c.title),txt('small','',(c.group&&c.group.length>1?'Group of '+c.group.length:b.label)+' · '+c.messages.length+' messages · '+new Date(c.ts).toLocaleString()));
   li.append(txt('span','ic',b.icon||'•'),mid,txt('span','','›'));li.onclick=()=>{conv=c;renderConv();closeSheet()};L.append(li)});
   if(!convs.length)L.append(txt('p','sub','No conversations yet.'))}
 $('#chatsBtn').onclick=e=>{renderConvList();openSheetEl('#chatsSheet',e.currentTarget)};
@@ -605,6 +644,37 @@ $('#micBtn').onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.interimResu
   const base=input.value?input.value+' ':'';rec.onresult=ev=>{let t='';for(const r of ev.results)t+=r[0].transcript;input.value=base+t;grow()};
   rec.onend=()=>{rec=null;$('#micBtn').classList.remove('rec');$('#micBtn').setAttribute('aria-pressed','false');input.focus()};
   rec.onerror=()=>{};$('#micBtn').classList.add('rec');$('#micBtn').setAttribute('aria-pressed','true');rec.start()};
+
+/* talk mode: hands-free voice conversation (opt-in). You speak -> it sends -> each bot answers aloud -> listens again.
+   This is the one place a message sends without tapping Send, and only while Talk is on. Chat only: nothing runs. */
+let talk=false,talkRec=null;
+function voiceFor(i){const vs=('speechSynthesis' in window)?speechSynthesis.getVoices():[];const lang=(navigator.language||'en').slice(0,2);
+  const mine=vs.filter(v=>v.lang&&v.lang.startsWith(lang));const pool=mine.length?mine:vs;return pool.length?pool[i%pool.length]:null}
+function sayAsync(text,i){return new Promise(res=>{if(!('speechSynthesis' in window)||!talk)return res();
+  const u=new SpeechSynthesisUtterance(String(text).replace(/```[\s\S]*?```/g,' code block ').replace(/[*#`>_]/g,'').slice(0,1500));
+  const v=voiceFor(i);if(v)u.voice=v;u.pitch=[1,.8,1.25,.95][i%4];u.rate=1.04;u.onend=u.onerror=()=>res();speechSynthesis.speak(u)})}
+async function talkSpeak(out){
+  for(const r of out){if(!talk)return;if(!r.ok)continue;$('#talkState').textContent=r.who+' is speaking…';
+    await sayAsync(r.text,Math.max(0,BOTS().findIndex(b=>b.id===r.bot)))}
+  if(talk)talkListen()}
+function talkListen(){
+  if(!talk||!SR)return;$('#talkState').textContent='Listening…';input.value='';grow();
+  talkRec=new SR();talkRec.interimResults=true;talkRec.continuous=false;talkRec.lang=navigator.language||'en-AU';
+  let said='';talkRec.onresult=ev=>{said='';for(const r of ev.results)said+=r[0].transcript;input.value=said;grow()};
+  talkRec.onerror=ev=>{if(ev.error==='not-allowed'){talkOff();$('#talkState').textContent='Microphone blocked'}};
+  talkRec.onend=async()=>{talkRec=null;if(!talk)return;const t=said.trim();
+    if(!t){setTimeout(talkListen,300);return}
+    if(/^(stop|end talk|stop talking)\.?$/i.test(t)){talkOff();return}
+    $('#talkState').textContent='Thinking…';input.value='';grow();setBusy(true);ctrl=new AbortController();
+    const r=await ask(t,{signal:ctrl.signal});ctrl=null;setBusy(false);talkSpeak(r.replies||[])};
+  try{talkRec.start()}catch(e){setTimeout(talkListen,500)}}
+function talkOn(){if(!SR){$('#talkBtn').setAttribute('aria-label','Talk mode needs speech recognition (Chrome)');return}
+  if(conv&&!conv.messages.length&&conv.title==='New chat'){} talk=true;$('#talkBtn').setAttribute('aria-pressed','true');$('#talkBar').hidden=false;talkListen()}
+function talkOff(){talk=false;$('#talkBtn').setAttribute('aria-pressed','false');$('#talkBar').hidden=true;
+  if(talkRec){try{talkRec.abort()}catch(e){}talkRec=null}if('speechSynthesis' in window)speechSynthesis.cancel();if(ctrl)ctrl.abort()}
+$('#talkBtn').hidden=!SR;
+$('#talkBtn').onclick=()=>talk?talkOff():talkOn();$('#talkStop').onclick=talkOff;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&talk)talkOff()});
 
 /* screen snapshot: one frame from screen share (desktop) or a screenshot from the gallery (phone) */
 function clearShot(){shot=null;$('#attach').hidden=true;$('#attach').textContent=''}
