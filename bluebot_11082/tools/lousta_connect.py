@@ -11,7 +11,7 @@ Then it SHOWS the changes and writes modules.json only if you type y (backup kep
 It never POSTs, never restarts anything, never touches 11884.
 Usage: python3 lousta_connect.py [hub_dir] [--yes] [--no-scan]
 """
-import glob, json, os, re, shutil, socket, subprocess, sys, time, urllib.request, urllib.error
+import glob, json, os, re, shutil, socket, subprocess, sys, time, urllib.parse, urllib.request, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
 HOME = os.path.expanduser("~")
@@ -147,9 +147,10 @@ def coding_agents(live_ports):
     return out[:60]
 
 
-def page_features(port):
+def page_features(port, page_url=None):
     """Read a local web page's own menu: links, tabs and section buttons -> feature tiles."""
-    code, html = get("http://127.0.0.1:%d/" % port, 2.5)
+    page_url = page_url or "http://127.0.0.1:%d/" % port
+    code, html = get(page_url, 2.5)
     if code != 200 or "<" not in html[:2000]:
         return None, []
     tm = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
@@ -163,12 +164,12 @@ def page_features(port):
             continue
         if href in ("#", "/") or href.endswith((".css", ".js", ".png", ".ico")):
             continue
-        url = href if href.startswith("http") else "http://127.0.0.1:%d%s%s" % (port, "/" if href.startswith("#") else "", href if href.startswith(("/", "#")) else "/" + href)
+        url = urllib.parse.urljoin(page_url, href)
         feats.append((label, url))
     for m in re.finditer(r"""<(?:button|div|li|span|a)\b[^>]*data-(?:tab|view|panel|route|section|surface|page|target)=["']([^"']+)["'][^>]*>(.*?)</(?:button|div|li|span|a)>""", html, re.S | re.I):
         val, label = m.group(1).strip(), clean(m.group(2))
         if label and not re.search(r"close|cancel|minimi[sz]e|×|✕", label, re.I):
-            feats.append((label, "http://127.0.0.1:%d/#%s" % (port, val.lstrip("#"))))
+            feats.append((label, page_url.split("#")[0] + "#" + val.lstrip("#")))
     seen, out = set(), []
     for label, url in feats:
         k = label.lower()
@@ -289,6 +290,26 @@ def main():
                 continue
             mid = re.sub(r"[^a-z0-9_]", "_", ("f%d_%s" % (p, label)).lower())[:40]
             if mid in mids:
+                continue
+            new["modules"].append({"id": mid, "label": label.title() if label.isupper() else label, "icon": "◇", "category": cat, "url": url})
+            mids.add(mid)
+            urls.add(url)
+            changes.append("tile %s / %s" % (cat, label))
+
+    for xu in cfg.get("extra_pages", []):
+        pp = urllib.parse.urlsplit(xu)
+        if pp.hostname not in ("127.0.0.1", "localhost") or (pp.port or 80) in NEVER:
+            continue
+        title, feats = page_features(pp.port or 80, xu)
+        if not feats:
+            print("   %s -> no menu found (or page down)" % xu)
+            continue
+        cat = "%s (:%d%s)" % (title or "Page", pp.port or 80, pp.path.rsplit("/", 2)[0][:30])
+        print("   %s %s -> %s" % (xu, title or "", ", ".join(f[0] for f in feats)))
+        urls = {m.get("url") for m in new["modules"]}
+        for label, url in feats:
+            mid = re.sub(r"[^a-z0-9_]", "_", ("x%d_%s_%s" % (pp.port or 80, pp.path.split("/")[1][:12], label)).lower())[:40]
+            if url in urls or mid in mids:
                 continue
             new["modules"].append({"id": mid, "label": label.title() if label.isupper() else label, "icon": "◇", "category": cat, "url": url})
             mids.add(mid)

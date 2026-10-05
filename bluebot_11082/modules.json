@@ -42,6 +42,13 @@
    "category": "Core"
   },
   {
+   "id": "eng_termux_portal",
+   "label": "Engineering Portal",
+   "icon": "⚙",
+   "category": "Core",
+   "url": "http://127.0.0.1:1182/bluebot-engineering-termux/portal/index.html"
+  },
+  {
    "id": "gate",
    "label": "Gate",
    "icon": "🔒",
@@ -590,5 +597,9 @@
     "timeout": 60
    }
   }
- }
+ },
+ "extra_pages": [
+  "http://127.0.0.1:1182/bluebot-engineering-termux/portal/index.html"
+ ],
+ "_extra_pages_note": "Pages that live below a port's root. Connect reads their menus too and adds their features as tiles."
 }
