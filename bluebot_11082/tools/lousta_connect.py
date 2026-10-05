@@ -7,7 +7,7 @@ What it does (all local, 127.0.0.1 only):
   3. reads BlueBot's /api/chat handler to learn the message field       -> chat.message_key / image_key
   4. reads every @name BlueBot knows (grok, codefix agents, trainees)   -> bots (own colour + icon)
   5. finds your coding agents / bots that serve a web page               -> health + "Agents" tiles
-Then it SHOWS the changes and writes modules.json only if you type y (backup kept).
+Then it SHOWS the changes and writes modules.local.json only if you type y (backup kept). modules.json (from git) is never edited.
 It never POSTs, never restarts anything, never touches 11884.
 Usage: python3 lousta_connect.py [hub_dir] [--yes] [--no-scan]
 """
@@ -117,13 +117,17 @@ def chat_fields():
     return msg, img, keys[:20]
 
 
+CSS_AT = {"keyframes", "media", "font-face", "import", "supports", "page", "charset", "layer", "container", "namespace",
+          "property", "counter-style", "font-feature-values", "-webkit-keyframes", "viewport", "document", "starting-style", "scope"}
+
+
 def at_names():
     src = read(os.path.join(WB, "app_trainee.py"))
     for f in glob.glob(os.path.join(WB, "*.py")):
         if not f.endswith("app_trainee.py"):
             src += read(f)
     names = re.findall(r"""["'\s(]@([a-z][a-z0-9_\-]{1,24})""", src)
-    bad = {"app", "property", "staticmethod", "classmethod", "dataclass", "router", "lru_cache", "wraps", "contextmanager", "abstractmethod"}
+    bad = {"app", "property", "staticmethod", "classmethod", "dataclass", "router", "lru_cache", "wraps", "contextmanager", "abstractmethod"} | CSS_AT
     return [n for n in dict.fromkeys(names) if n not in bad][:24]
 
 
@@ -182,8 +186,13 @@ def page_features(port, page_url=None):
 def main():
     yes = "--yes" in sys.argv
     hub = find_hub(sys.argv[1:])
-    cfgp = os.path.join(hub, "modules.json")
-    cfg = json.load(open(cfgp))
+    cfgp = os.path.join(hub, "modules.local.json")     # this phone's connections; modules.json stays as git has it
+    sys.path.insert(0, hub)
+    from hub_11082 import load_config  # noqa: E402  (merged view, same as the running hub)
+    import hub_11082
+    hub_11082.HERE = hub
+    cfg = load_config()
+    base = json.loads(json.dumps(cfg))
     print("LOUSTA CONNECT  hub=%s" % hub)
     print("MUTATION=only %s after you confirm   POST=NO   RESTART=NO   11884=NEVER   PRODUCTION=LOCKED\n" % cfgp)
 
@@ -245,6 +254,10 @@ def main():
     if img and not new.get("chat", {}).get("image_key"):
         new["chat"]["image_key"] = img
         changes.append("chat.image_key = " + img)
+    css_bad = [b for b in new.get("bots", []) if b.get("prefix", "").strip().lstrip("@") in CSS_AT]
+    if css_bad:
+        new["bots"] = [b for b in new["bots"] if b not in css_bad]
+        changes.extend("remove bot @%s (CSS word, not a bot)" % b["prefix"].strip().lstrip("@") for b in css_bad)
     have = {b.get("prefix", "").strip().lstrip("@") for b in new.get("bots", [])}
     k = 0
     for n in names:
@@ -330,11 +343,33 @@ def main():
         if ans != "y":
             print("NOT APPLIED. Nothing changed.")
             return 0
-    bak = cfgp + ".bak_" + time.strftime("%Y%m%d_%H%M%S")
-    shutil.copy2(cfgp, bak)
+    try:
+        local = json.load(open(cfgp))
+    except Exception:
+        local = {}
+    for k in ("chat", "termux", "brains"):
+        for kk, vv in (new.get(k) or {}).items():
+            if (base.get(k) or {}).get(kk) != vv:
+                local.setdefault(k, {})[kk] = vv
+    for key, idk in (("bots", "id"), ("modules", "id"), ("health", "port")):
+        old_ids = {x.get(idk) for x in base.get(key, [])}
+        new_ids = {x.get(idk) for x in new.get(key, [])}
+        adds = [x for x in new.get(key, []) if x.get(idk) not in old_ids]
+        rems = sorted(i for i in old_ids - new_ids if i is not None)
+        if adds:
+            cur = {x.get(idk) for x in local.get(key + "_add", [])}
+            local.setdefault(key + "_add", []).extend(x for x in adds if x.get(idk) not in cur)
+        if rems:
+            local[key + "_add"] = [x for x in local.get(key + "_add", []) if x.get(idk) not in rems]
+            local[key + "_remove"] = sorted(set(local.get(key + "_remove", [])) | set(rems))
+    bak = None
+    if os.path.exists(cfgp):
+        bak = cfgp + ".bak_" + time.strftime("%Y%m%d_%H%M%S")
+        shutil.copy2(cfgp, bak)
     with open(cfgp, "w", encoding="utf-8") as f:
-        json.dump(new, f, indent=1, ensure_ascii=False)
-    print("APPLIED. Backup: %s\nReload 127.0.0.1:11082 (no restart needed).\nROLLBACK: cp '%s' '%s'" % (bak, bak, cfgp))
+        json.dump(local, f, indent=1, ensure_ascii=False)
+    print("APPLIED to %s\nReload 127.0.0.1:11082 (no restart needed). git pull keeps working.\nROLLBACK: %s" %
+          (cfgp, ("cp '%s' '%s'" % (bak, cfgp)) if bak else "rm '%s'" % cfgp))
     return 0
 
 

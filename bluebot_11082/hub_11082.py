@@ -33,7 +33,6 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("HUB_PORT", "11082"))
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/index.html": ("index.html", "text/html; charset=utf-8"),
-          "/modules.json": ("modules.json", "application/json"),
           "/work_orders.json": ("work_orders.json", "application/json")}
 VERSION = "BLUEBOT_HUB_11082_V3"
 MAX_CHAT_BYTES = 3 * 1024 * 1024   # room for one compressed screenshot
@@ -47,9 +46,46 @@ def local_only(url):
     return p.scheme == "http" and p.hostname in ("127.0.0.1", "localhost")
 
 
+def _merge(base, local):
+    """modules.local.json (written by Connect/Promote on this phone) layered over modules.json (from git)."""
+    for k in ("chat", "termux", "brains"):
+        if isinstance(local.get(k), dict):
+            base.setdefault(k, {})
+            for kk, vv in local[k].items():
+                if isinstance(vv, dict) and isinstance(base[k].get(kk), dict):
+                    base[k][kk].update(vv)
+                else:
+                    base[k][kk] = vv
+    for key, idk in (("bots", "id"), ("modules", "id"), ("health", "port")):
+        rm = set(local.get(key + "_remove", []))
+        base[key] = [x for x in base.get(key, []) if x.get(idk) not in rm]
+        have = {x.get(idk) for x in base[key]}
+        for x in local.get(key + "_add", []):
+            if x.get(idk) not in have:
+                base[key].append(x)
+                have.add(x.get(idk))
+    for mid, patch in (local.get("modules_patch") or {}).items():
+        for m in base.get("modules", []):
+            if m.get("id") == mid:
+                m.update(patch)
+    for u in local.get("extra_pages_add", []):
+        base.setdefault("extra_pages", [])
+        if u not in base["extra_pages"]:
+            base["extra_pages"].append(u)
+    return base
+
+
 def load_config():
     with open(os.path.join(HERE, "modules.json"), encoding="utf-8") as f:
-        return json.load(f)
+        cfg = json.load(f)
+    lp = os.path.join(HERE, "modules.local.json")
+    if os.path.isfile(lp):
+        try:
+            with open(lp, encoding="utf-8") as f:
+                cfg = _merge(cfg, json.load(f))
+        except ValueError:
+            cfg["_local_error"] = "modules.local.json is not valid JSON - ignored"
+    return cfg
 
 
 def has_reply(j):
@@ -122,6 +158,8 @@ class Hub(BaseHTTPRequestHandler):
             return self.send_json(200, {"version": VERSION, "ts": int(time.time()),
                                         "production": "LOCKED", "execution": "NONE",
                                         "services": results})
+        if path == "/modules.json":
+            return self.send_json(200, load_config())
         mm = MODULE_RE.match(path)
         if mm:
             f = os.path.join(HERE, "modules", mm.group(1) + ".js")

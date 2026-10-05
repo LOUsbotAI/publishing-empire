@@ -484,9 +484,17 @@
    "id": "loucode",
    "label": "LouCode",
    "icon": "⌘",
-   "prefix": "LouCode (Engineering): write the code for this - ",
+   "prefix": "@loucode ",
    "color": "#22c55e",
-   "desc": "LouCode coding specialist inside Engineering."
+   "desc": "LouCode via BlueBot (@loucode → local Qwen coder 3B adapter). Needs 11437 up."
+  },
+  {
+   "id": "lougrok",
+   "label": "LouGrok",
+   "icon": "✷",
+   "prefix": "@lougrok ",
+   "color": "#f59e0b",
+   "desc": "@lougrok lane in BlueBot (local adapter). Needs 11437 up."
   },
   {
    "id": "claude",

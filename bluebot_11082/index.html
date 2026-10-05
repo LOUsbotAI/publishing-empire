@@ -620,9 +620,10 @@ function renderConv(){msgs.textContent='';$('#empty').hidden=!!(conv&&conv.messa
   if(conv)setBot(conv.bot,true);const last=msgs.lastElementChild;if(last)last.scrollIntoView({block:'end'})}
 
 function pickReply(j){
-  if(typeof j==='string')return j.trim()||null;if(!j||typeof j!=='object')return null;
+  if(typeof j==='string'){const t=j.trim();if(/^[\[{]/.test(t)){try{const r=pickReply(JSON.parse(t));if(r)return r}catch(e){}}return t||null}
+  if(!j||typeof j!=='object')return null;
   for(const k of ['reply','response','answer','text','message','content','output','result']){
-    const v=j[k];if(typeof v==='string'&&v.trim())return v;if(v&&typeof v==='object'){const r=pickReply(v);if(r)return r}}
+    const v=j[k];if(typeof v==='string'&&v.trim())return pickReply(v);if(v&&typeof v==='object'){const r=pickReply(v);if(r)return r}}
   return j.data?pickReply(j.data):null}
 
 /* the ONE network write in this app */

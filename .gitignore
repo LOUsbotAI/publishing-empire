@@ -20,3 +20,8 @@ reports/
 keys.env
 *.keys.env
 .lousta/
+bluebot_11082/modules.local.json
+bluebot_11082/modules.local.json.bak_*
+bluebot_11082/modules.json.bak_*
+bluebot_11082/modules/.backup/
+bluebot_11082/modules/PROMOTIONS.log
