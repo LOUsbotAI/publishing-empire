@@ -57,6 +57,18 @@ It collects:
 
 It changes nothing and never touches 11884. Secrets are masked. The report is copied to Downloads, ready to upload.
 
+## Connect everything (the last bit)
+```bash
+python3 ~/publishing-empire/bluebot_11082/tools/lousta_connect.py
+```
+It finds the running hub and checks what answers on the phone (GET only). It works out:
+- the 11883 Live Termux route
+- BlueBot's chat and image fields
+- every `@bot` BlueBot knows, each given its own colour and icon
+- your coding agents that serve a page, added as tiles under **Agents**
+
+It shows the proposed changes and writes `modules.json` only after you type **y**, keeping a backup and printing a rollback line. Re-run it whenever you start more services. It never POSTs, restarts anything or touches 11884.
+
 ## AI stack check (LouCode, AutoCode, Swarm, Qwen/llama, LouBot)
 ```bash
 bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add --chat to also ping BlueBot
