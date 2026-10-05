@@ -7,6 +7,7 @@ One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot
   - **Conversations:** saved on the phone.
   - **Replies:** formatted text with copy buttons on code, plus Stop, Retry and Speak.
   - **Voice:** dictation fills the box and never sends by itself.
+  - **Bot colours:** every bot has its own colour and icon on its message boxes (`color` and `icon` in `modules.json` → `bots`).
   - **Group chat:** pick 2+ bots in the bot sheet. Each answers in turn and sees the others' replies. **↻ Let them continue** runs one more bot-to-bot round. It never loops on its own.
   - **Talk mode** (wave button): hands-free voice. You speak, it sends, each bot answers aloud in its own voice, then it listens again. Say "stop" or tap **End talk**. This is the only place a message sends without tapping Send. Chat only; nothing runs. Needs Chrome speech recognition, which uses Google's speech service.
   - **Screen:** one-frame snapshot on desktop, or a screenshot from the gallery on a phone.

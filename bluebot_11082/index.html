@@ -212,6 +212,11 @@ body.viewing .nav{display:none}
 .pulse{width:10px;height:10px;border-radius:50%;background:#fff;animation:b 1s infinite}
 #talkBtn[aria-pressed="true"]{color:#fff;background:var(--grad)}
 .cont{justify-content:center}
+.msg.bot{--bc:var(--a2);background:color-mix(in srgb,var(--bc) 9%,var(--card));border-color:color-mix(in srgb,var(--bc) 35%,transparent);border-left:3px solid var(--bc)}
+.msg.bot .who{display:flex;align-items:center;gap:8px;color:var(--bc)}
+.msg.bot .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:#fff;background:var(--bc);box-shadow:0 0 0 3px color-mix(in srgb,var(--bc) 25%,transparent);letter-spacing:0}
+.msg.bot.err{--bc:var(--down)}
+.li .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--bc,var(--card2))}
 /* native modules + build queue */
 .native{position:absolute;inset:0;overflow:auto;padding:16px 16px 40px;background:var(--bg);display:none}
 .native.on{display:block}
@@ -502,6 +507,8 @@ let convs=[];try{convs=JSON.parse(recall('lousta.convs')||'[]')}catch(e){convs=[
 let conv=null,shot=null,ctrl=null;
 const saveConvs=()=>store('lousta.convs',JSON.stringify(convs.slice(0,40).map(c=>({...c,messages:c.messages.slice(-80).map(m=>({...m,shot:undefined}))}))));
 const uid=p=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function botOf(id,label){return BOTS().find(b=>b.id===id)||BOTS().find(b=>b.label===label)||null}
+function badge(d,b){if(b&&b.color)d.style.setProperty('--bc',b.color);const w=d.querySelector('.who');if(w){const a=txt('span','av',(b&&b.icon)||'•');w.prepend(a)}}
 function bot(){return BOTS().find(b=>b.id===(conv&&conv.bot))||BOTS()[0]}
 function newConv(botId){conv={id:uid('conv'),title:'New chat',bot:botId||(conv?conv.bot:BOTS()[0].id),messages:[],ts:Date.now()};convs.unshift(conv);renderConv();saveConvs()}
 function setBot(id,keepGroup){if(!conv)newConv(id);conv.bot=id;if(!keepGroup)delete conv.group;const b=bot(),g=groupIds();
@@ -547,7 +554,7 @@ function drawMsg(m){
   const d=el('div','msg '+(m.role==='me'?'me':'bot')+(m.err?' err':''));
   d.append(txt('span','who',m.role==='me'?'You':(m.who||'BlueBot')));
   if(m.role==='me'){const b=el('span');b.textContent=m.text;d.append(b);if(m.shot){const im=el('img','shot');im.src=m.shot;im.alt='attached screenshot';d.append(im)}}
-  else{d.append(md(m.text));if(m.raw){d.append(txt('pre','',m.raw))}
+  else{badge(d,botOf(m.bot,m.who));d.append(md(m.text));if(m.raw){d.append(txt('pre','',m.raw))}
     d.append(txt('span','meta',m.meta||''));
     const acts=el('div','msgacts');const c=txt('button','mini','Copy');c.onclick=()=>copy(m.text,c);
     const sp=txt('button','mini','Speak');sp.onclick=()=>speak(m.text,sp);acts.append(c,sp);
@@ -578,7 +585,7 @@ function groupPrompt(b,mode){
                       :'Reply to Louie\'s latest message in your own voice, briefly. You may build on or challenge the other bots; do not repeat them.')+
     ' Drafts and advice only. Nothing runs without Louie\'s Gate.'}
 async function botTurn(b,content,opts){
-  const wait=el('div','msg bot','<span class="who"></span><span class="typing"><i></i><i></i><i></i></span>');wait.firstChild.textContent=b.label;msgs.appendChild(wait);wait.scrollIntoView({behavior:'smooth',block:'end'});
+  const wait=el('div','msg bot','<span class="who"></span><span class="typing"><i></i><i></i><i></i></span>');wait.firstChild.textContent=b.label;badge(wait,b);msgs.appendChild(wait);wait.scrollIntoView({behavior:'smooth',block:'end'});
   const key=(cfg.chat&&cfg.chat.message_key)||'message',trace=uid('tr');
   const payload={[key]:(b.prefix||'')+content,conversation_id:conv.id,trace_id:trace,source:'hub_11082',bot:b.id};
   if(groupIds())payload.group=groupIds();
@@ -628,7 +635,7 @@ function renderBots(){const L=$('#botList');L.textContent='';const g=groupIds();
   gs.append(go2);L.append(txt('p','sub','One bot'));
   BOTS().forEach(b=>{const li=el('button','li');li.setAttribute('aria-current',String(!g&&b.id===bot().id));
   const mid=el('div');mid.append(txt('b','',b.label),txt('small','',(b.prefix?b.prefix.trim()+' · ':'')+(b.desc||'')));
-  li.append(txt('span','ic',b.icon||'•'),mid,txt('span','',!g&&b.id===bot().id?'✓':''));li.onclick=()=>{setBot(b.id);closeSheet()};L.append(li)});L.append(gs)}
+  const ic=txt('span','ic',b.icon||'•');if(b.color)ic.style.setProperty('--bc',b.color);li.append(ic,mid,txt('span','',!g&&b.id===bot().id?'✓':''));li.onclick=()=>{setBot(b.id);closeSheet()};L.append(li)});L.append(gs)}
 $('#botBtn').onclick=e=>{renderBots();openSheetEl('#botSheet',e.currentTarget)};
 function renderConvList(){const L=$('#convList');L.textContent='';convs.forEach(c=>{const li=el('button','li');li.setAttribute('aria-current',String(conv&&c.id===conv.id));
   const mid=el('div');const b=BOTS().find(x=>x.id===c.bot)||BOTS()[0];mid.append(txt('b','',c.title),txt('small','',(c.group&&c.group.length>1?'Group of '+c.group.length:b.label)+' · '+c.messages.length+' messages · '+new Date(c.ts).toLocaleString()));

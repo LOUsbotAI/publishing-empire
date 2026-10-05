@@ -438,24 +438,27 @@
    "label": "BlueBot",
    "icon": "♣",
    "prefix": "",
-   "desc": "Manager. Routes to the right department."
+   "desc": "Manager. Routes to the right department.",
+   "color": "#3b82f6"
   },
   {
    "id": "grok",
    "label": "Grok",
    "icon": "✶",
    "prefix": "@grok ",
-   "desc": "Grok lane on 11880 (external network: owner decision WO-00)."
+   "desc": "Grok lane on 11880 (external network: owner decision WO-00).",
+   "color": "#f97316"
   },
   {
    "id": "grok_image",
    "label": "Grok Image",
    "icon": "◐",
    "prefix": "@grok-image ",
-   "desc": "Image generation lane on 11880."
+   "desc": "Image generation lane on 11880.",
+   "color": "#ec4899"
   }
  ],
- "_bots_note": "Each bot is a prefix on the same 11880 chat route. Only @grok and @grok-image are proven in the 11880 log; add codefix agents / trainees here after the census confirms their names.",
+ "_bots_note": "Each bot is a prefix on the same 11880 chat route. Only @grok and @grok-image are proven in the 11880 log; add codefix agents / trainees here after the census confirms their names. Each bot can set its own color (hex) and icon; message boxes use them.",
  "termux": {
   "readback_url": "",
   "screen_key": "screen_plain",
