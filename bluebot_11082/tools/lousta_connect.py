@@ -9,15 +9,16 @@ What it does (all local, 127.0.0.1 only):
   5. finds your coding agents / bots that serve a web page               -> health + "Agents" tiles
 Then it SHOWS the changes and writes modules.json only if you type y (backup kept).
 It never POSTs, never restarts anything, never touches 11884.
-Usage: python3 lousta_connect.py [hub_dir] [--yes]
+Usage: python3 lousta_connect.py [hub_dir] [--yes] [--no-scan]
 """
-import glob, json, os, re, shutil, subprocess, sys, time, urllib.request, urllib.error
+import glob, json, os, re, shutil, socket, subprocess, sys, time, urllib.request, urllib.error
+from concurrent.futures import ThreadPoolExecutor
 
 HOME = os.path.expanduser("~")
 ROOT = os.path.join(HOME, "bluebits/empire_director_v1")
 WB = os.path.join(ROOT, "supervised_dev/1182_bluebot_chat_installation_ready_v1/BLUEBOT_CHAT_INSTALLATION_READY_V1_20260926T020840Z/workbench")
 UI = os.path.join(ROOT, "supervised_dev/1182_r4_chat_integration_v1/R4_CHAT_INTEGRATION_V1_20260926/ui")
-NEVER = {11884}
+NEVER = {11884, 11082}   # 11884 owner-manual input; 11082 is this app
 KNOWN = {1182: "Front door", 11880: "BlueBot", 11882: "Directory", 11770: "Owner Gate", 11883: "Readback",
          18082: "Owner Ctl", 18097: "LouBot Pad", 1185: "Honeycomb", 11902: "Proposals", 6205: "Brain Hub",
          11437: "Qwen", 11438: "llama", 11904: "Team bus", 18088: "Feed", 1183: "Readback (alt)"}
@@ -55,6 +56,21 @@ def find_hub(argv):
         pass
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return here
+
+
+def scan_ports(lo=1024, hi=20000):
+    """Find every listening port on this phone (127.0.0.1 only, connect test, nothing sent)."""
+    def probe(p):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.08)
+        try:
+            return p if s.connect_ex(("127.0.0.1", p)) == 0 else None
+        except Exception:
+            return None
+        finally:
+            s.close()
+    with ThreadPoolExecutor(max_workers=200) as ex:
+        return [p for p in ex.map(probe, range(lo, hi + 1)) if p and p not in NEVER]
 
 
 def script_ports():
@@ -174,6 +190,12 @@ def main():
     ports = dict(KNOWN)
     for p, src in script_ports().items():
         ports.setdefault(p, "from " + src)
+    if "--no-scan" not in sys.argv:
+        t0 = time.time()
+        found = scan_ports()
+        for p in found:
+            ports.setdefault(p, "found by scan")
+        print("   scanned 1024-20000 in %.1fs: %d listening ports" % (time.time() - t0, len(found)))
     live = {}
     for p in sorted(ports):
         if p in NEVER:
@@ -236,7 +258,7 @@ def main():
     for p, code in sorted(live.items()):
         if p not in hp and p not in NEVER:
             new["health"].append({"port": p, "role": ports.get(p, "Service"), "url": "http://127.0.0.1:%d/" % p})
-            changes.append("health :%d %s" % (p, ports.get(p, "")))
+            changes.append("health :%d %s" % (p, ports.get(p, "")))  # role renamed to page title below if it has one
     mids = {m["id"] for m in new["modules"]}
     for a in agents:
         if a["live"]:
@@ -252,9 +274,14 @@ def main():
         if p in NEVER or p in (11437, 11438):
             continue
         title, feats = page_features(p)
+        if title is not None and not feats and p not in KNOWN:
+            feats = [(title or ("Page :%d" % p), "http://127.0.0.1:%d/" % p)]
         if not feats:
             continue
         cat = "%s (:%d)" % (title or ports.get(p, "Page"), p)
+        for h in new["health"]:
+            if h.get("port") == p and title and h.get("role") in ("found by scan", "Service") or (h.get("port") == p and title and str(h.get("role", "")).startswith("from ")):
+                h["role"] = title[:24]
         print("   :%d %s -> %s" % (p, title or "", ", ".join(f[0] for f in feats)))
         urls = {m.get("url") for m in new["modules"]}
         for i, (label, url) in enumerate(feats):

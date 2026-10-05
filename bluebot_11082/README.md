@@ -59,7 +59,7 @@ It changes nothing and never touches 11884. Secrets are masked. The report is co
 
 ## Connect everything (the last bit)
 ```bash
-python3 ~/publishing-empire/bluebot_11082/tools/lousta_connect.py
+python3 ~/publishing-empire/bluebot_11082/tools/lousta_connect.py          # scans 1024-20000 for every local page (add --no-scan to skip)
 ```
 It finds the running hub and checks what answers on the phone (GET only). It works out:
 - the 11883 Live Termux route
