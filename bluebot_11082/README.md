@@ -71,6 +71,13 @@ It finds the running hub and checks what answers on the phone (GET only). It wor
 
 It shows the proposed changes and writes **`modules.local.json`** only after you type **y**, keeping a backup and printing a rollback line. `modules.json` (from git) is never edited, so `git pull` always works. The hub layers your local file on top. Re-run it whenever you start more services. It never POSTs, restarts anything or touches 11884.
 
+## Bring BlueBot's local brain back (llama 11438 + Qwen adapter 11437)
+```bash
+bash ~/lousta-hub/bluebot_11082/tools/START_LOCAL_BRAIN.sh           # 3B coder (what BlueBot expects)
+bash ~/lousta-hub/bluebot_11082/tools/START_LOCAL_BRAIN.sh --small   # 1.5B, if memory is low
+```
+It shows what it will start, then asks y/N. It starts only those two, in their own windows of the existing studio tmux, and skips any that already answer. It waits for each to answer and finishes with a tiny local test question. Nothing is killed and 11884 is never touched. Stop with the `STOP=` line it prints.
+
 ## AI stack check (LouCode, AutoCode, Swarm, Qwen/llama, LouBot)
 ```bash
 bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add --chat to also ping BlueBot
