@@ -57,6 +57,12 @@ It collects:
 
 It changes nothing and never touches 11884. Secrets are masked. The report is copied to Downloads, ready to upload.
 
+## AI stack check (LouCode, AutoCode, Swarm, Qwen/llama, LouBot)
+```bash
+bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add --chat to also ping BlueBot
+```
+Read-only. The only thing it sends is two tiny "Reply with exactly: OK" prompts to the local model on 127.0.0.1. It ends with a PASS/DOWN summary and copies the report to Downloads.
+
 ## Team build (finish the app with BlueBot)
 See **BUILD_CHARTER.md**. The **Build** tab lists the team's work orders (`work_orders.json`).
 **Hand to BlueBot** puts a brief in the chat box, and you press Send. The team delivers one module file per work order
