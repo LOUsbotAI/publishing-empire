@@ -76,6 +76,14 @@ bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add -
 ```
 Read-only. The only thing it sends is two tiny "Reply with exactly: OK" prompts to the local model on 127.0.0.1. It ends with a PASS/DOWN summary and copies the report to Downloads.
 
+## Make BlueBot build the rest (one tap)
+**Build → ▶ Build the rest** sends BlueBot the next ready work orders, up to 5 per tap, one at a time while you watch.
+- It respects order: WO-01 (census) goes first; WO-02 to WO-07 and WO-11 to WO-14 follow once WO-01 is in Review or Done.
+- Each brief gets **real data just fetched** from your services (status, live, gate, readback…), so BlueBot uses real keys instead of guessing. It's also told the exact module name.
+- Progress per order is saved on the phone: READY → IN PROGRESS → REVIEW → DONE (**Mark done** / **Reopen**).
+- Every BlueBot reply that contains a module gets **Check** (same rules as `check_module.py`), **Save .js** (to Downloads) and **Copy promote command**. Paste that command in Termux to put it live, then reload the app.
+- New orders: **WO-11 Warehouse**, **WO-12 Projects**, **WO-13 Outputs · Hold** (1182's features, rebuilt natively) and **WO-14 Swarm console**.
+
 ## Team build (finish the app with BlueBot)
 See **BUILD_CHARTER.md**. The **Build** tab lists the team's work orders (`work_orders.json`).
 **Hand to BlueBot** puts a brief in the chat box, and you press Send. The team delivers one module file per work order

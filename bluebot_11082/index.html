@@ -357,7 +357,7 @@ body.viewing .nav{display:none}
       <div class="sec" style="margin:0 0 8px"><h2>Auto-build run</h2><span id="runState">idle</span></div>
       <p class="sub" style="margin:0 0 6px;font-size:13.5px">Pick READY work orders and a bot. They are sent one at a time while you watch. Replies are drafts only. Nothing goes live without PROMOTE.</p>
       <div id="runPick"></div>
-      <div class="msgacts"><button class="btn pri" id="runStart">Start run</button><button class="btn" id="runStop" disabled>Stop</button></div>
+      <div class="msgacts"><button class="btn pri" id="buildRest">▶ Build the rest</button><button class="btn" id="runStart">Run ticked</button><button class="btn" id="runStop" disabled>Stop</button></div>
       <div class="runlog" id="runLog" style="margin-top:10px"></div>
     </div>
     <div class="sec"><h2>Work orders</h2><span id="woCount"></span></div>
@@ -602,6 +602,7 @@ function drawMsg(m){
     d.append(txt('span','meta',m.meta||''));
     const acts=el('div','msgacts');const c=txt('button','mini','Copy');c.onclick=()=>copy(m.text,c);
     const sp=txt('button','mini','Speak');sp.onclick=()=>speak(m.text,sp);acts.append(c,sp);
+    moduleTools(m.text,acts,d);
     if(m.retry){const r=txt('button','mini','Retry');r.onclick=()=>{input.value=m.retry;grow();$('#composer').requestSubmit()};acts.append(r)}
     d.append(acts)}
   msgs.appendChild(d);$('#empty').hidden=true;return d}
@@ -669,6 +670,33 @@ $('#composer').addEventListener('submit',async e=>{
   const text=input.value.trim();if(!text&&!shot)return;
   const s2=shot;input.value='';clearShot();grow();setBusy(true);ctrl=new AbortController();
   await ask(text||'(screenshot)',{shot:s2,signal:ctrl.signal});ctrl=null;setBusy(false)});
+
+/* module tools: a reply that contains a hub module gets Check · Save .js · Copy promote */
+function modLint(name,src){const R=[];
+  if(!/^[a-z0-9_]{1,40}$/.test(name))R.push('module id must be lowercase a-z 0-9 _');
+  if(src.length>100000)R.push('larger than 100 KB');
+  if(!new RegExp("LoustaHub\\.register\\(\\s*\\{[^}]*id:\\s*['\"]"+name+"['\"]").test(src))R.push("must call LoustaHub.register({id:'"+name+"'})");
+  if(!/render/.test(src))R.push('missing render(el, api)');
+  const body=src.replace(/\/\*[\s\S]*?\*\//g,m=>'\n'.repeat((m.match(/\n/g)||[]).length));
+  const rules=[[/\bfetch\s*\(/,'direct fetch (use api.get)'],[/XMLHttpRequest|WebSocket|EventSource|sendBeacon/,'direct network transport'],
+    [/\beval\s*\(|new\s+Function\s*\(|\bimport\s*\(/,'dynamic code'],[/innerHTML\s*=|outerHTML\s*=|insertAdjacentHTML|document\.write/,'raw HTML injection'],
+    [/11884|tmux|run-approved|stage-approved|release-approved|\/loukey\/auto|\/api\/decision|\/api\/gate/,'execution or gate path'],
+    [/['"](POST|PUT|PATCH|DELETE)['"]/,'write method'],[/document\.cookie|localStorage\.clear|sessionStorage\.clear/,'storage tampering'],
+    [/https?:\/\/(?!127\.0\.0\.1|localhost)[a-z0-9]/,'non-local URL'],[/LoustaHub\s*=/,'overwrites the hub API']];
+  body.split('\n').forEach((line,i)=>{const code=line.replace(/(^|[^:])\/\/.*$/,'$1');rules.forEach(([re,why])=>{if(re.test(code))R.push('line '+(i+1)+': '+why)})});
+  return R}
+function moduleTools(text,acts,box){
+  const m=String(text).match(/```(?:js|javascript)?\s*\n([\s\S]*?LoustaHub\.register[\s\S]*?)```/);if(!m)return;
+  const src=m[1].replace(/\n$/,'')+'\n';const idm=src.match(/LoustaHub\.register\(\s*\{[^}]*?id:\s*['"]([^'"]+)['"]/);const name=idm?idm[1]:'module';
+  const wo=((wos&&wos.orders)||[]).find(o=>o.module===name);
+  const out=el('div','warns');out.hidden=true;
+  const chk=txt('button','mini','Check '+name+'.js');
+  chk.onclick=()=>{const R=modLint(name,src);out.textContent='';out.hidden=false;
+    if(!R.length)out.append(txt('span','','✅ CHECK=PASS · Save it, then run the promote command in Termux'));else R.forEach(r=>out.append(txt('span','x','⛔ '+r)))};
+  const save=txt('button','mini','Save .js');save.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));a.download=name+'.js';document.body.append(a);a.click();a.remove();save.textContent='Saved to Downloads'};
+  const pc=txt('button','mini','Copy promote command');pc.onclick=async()=>{const dir=await getHubDir();
+    copy('bash "'+dir+'/PROMOTE_MODULE.sh" ~/storage/downloads/'+name+'.js '+((wo&&wo.tile)||name)+(wo?'':' Observe'),pc)};
+  acts.append(chk,save,pc);if(box)box.append(out)}
 
 /* bots + conversations sheets */
 function renderBots(){const L=$('#botList');L.textContent='';const g=groupIds();
@@ -810,22 +838,47 @@ async function openNative(m,show){
 
 /* ---------- Build: the team's work orders ---------- */
 let wos=null;
+/* work-order progress lives on this phone (work_orders.json stays the plan) */
+let woSt={};try{woSt=JSON.parse(recall('lousta.wo')||'{}')}catch(e){woSt={}}
+const stOf=o=>woSt[o.id]||o.status;
+function setSt(id,st){woSt[id]=st;store('lousta.wo',JSON.stringify(woSt))}
+let hubDir=null;
+async function getHubDir(){if(hubDir)return hubDir;try{hubDir=(await (await fetch('/hub/status')).json()).dir}catch(e){}return hubDir||'~/publishing-empire/bluebot_11082'}
+/* attach REAL data samples so BlueBot never guesses keys */
+async function enrich(o){
+  let extra='';
+  for(const src of (o.samples||[])){
+    const url=src.startsWith('cfg:')?src.slice(4).split('.').reduce((a,k)=>a&&a[k],cfg):src;
+    if(!url){extra+='\n- '+src+': NOT CONFIGURED YET (run lousta_connect.py)';continue}
+    const r=await api.get(url);
+    const body=r.data==null?'':(typeof r.data==='string'?r.data:JSON.stringify(r.data,null,1));
+    extra+='\n- GET '+url+' -> HTTP '+(r.status||'000')+(body?'\n```json\n'+body.slice(0,1500)+(body.length>1500?'\n…(trimmed)':'')+'\n```':' (no answer)');
+  }
+  const ctx='\n\nLIVE CONTEXT FROM LOUSTA HUB 11082 (real, just fetched)\n'+
+    '- Services up: '+Object.values(health).filter(h=>h.state==='UP').map(h=>h.role+':'+h.port).join(', ')+
+    '\n- Chat field: '+((cfg.chat&&cfg.chat.message_key)||'message')+' · Termux readback: '+((cfg.termux&&cfg.termux.readback_url)||'not configured')+
+    (o.module?'\n- Name the module EXACTLY "'+o.module+'" (file '+o.module+'.js). Reply with ONE ```js code block containing the whole file.':'')+
+    (extra?'\n\nREAL DATA SAMPLES (use only keys you see here):'+extra:'');
+  return o.brief+ctx}
 async function renderBuild(){
   if(!wos){try{wos=await (await fetch('/work_orders.json',{cache:'no-store'})).json()}catch(e){wos={orders:[]}}}
   const list=$('#woList');list.textContent='';const os=wos.orders||[];
-  const done=os.filter(o=>o.status==='DONE').length;
+  const done=os.filter(o=>stOf(o)==='DONE').length;
   const p=$('#buildProg');p.textContent='';const bar=el('div','bar','<i></i>');bar.style.flex='1';bar.firstChild.style.width=(os.length?done/os.length*100:0)+'%';
   p.append(txt('span','',done+' of '+os.length+' done'),bar);if(!run)renderRunPick();
-  $('#woCount').textContent=os.filter(o=>o.status==='READY').length+' ready';
+  $('#woCount').textContent=os.filter(o=>stOf(o)==='READY'&&o.who!=='OWNER').length+' ready';
   os.forEach(o=>{
-    const c=el('div','card wo');const row=el('div','row');
-    row.append(txt('span','id',o.id),txt('span','pill '+(o.status||''),(o.status||'').replace('_',' ')),txt('span','pill',o.who||'TEAM'));
+    const st=stOf(o);const c=el('div','card wo');const row=el('div','row');
+    row.append(txt('span','id',o.id),txt('span','pill '+(st||''),(st||'').replace('_',' ')),txt('span','pill',o.who||'TEAM'));
+    if(o.module)row.append(txt('span','pill',o.module+'.js'));
     c.append(row,txt('div','t',o.title),txt('p','',o.summary||''));
     if(o.depends&&o.depends.length)c.append(txt('p','','After: '+o.depends.join(', ')));
     const d=el('details');d.append(txt('summary','','Full brief'),txt('pre','',o.brief||''));c.append(d);
-    if(o.who!=='OWNER'&&o.status!=='DONE'){const a=el('div','acts');const b=txt('button','btn pri','Hand to BlueBot');
-      b.onclick=()=>api.ask(o.brief);a.append(b);c.append(a)}
-    list.appendChild(c)});
+    const a=el('div','acts');
+    if(o.who!=='OWNER'&&st!=='DONE'){const b=txt('button','btn pri','Hand to BlueBot');b.onclick=async()=>{b.textContent='Gathering real data…';const t=await enrich(o);setSt(o.id,'IN_PROGRESS');api.ask(t)};a.append(b)}
+    if(st!=='DONE'){const m=txt('button','btn','Mark done');m.onclick=()=>{setSt(o.id,'DONE');renderBuild()};a.append(m)}
+    else{const u=txt('button','btn','Reopen');u.onclick=()=>{setSt(o.id,o.status);renderBuild()};a.append(u)}
+    c.append(a);list.appendChild(c)});
 }
 
 /* ---------- Code: Termux script loop with error-correcting agent ----------
@@ -918,26 +971,30 @@ $('#cgAuto').onchange=e=>{clearInterval(cgWatch);cgWatch=null;if(!e.target.check
    Same single chat route; replies are drafts. Stops on first failure or on Stop. Max 5 per run. */
 let run=null;
 function renderRunPick(){
-  const P=$('#runPick');P.textContent='';const os=(wos&&wos.orders||[]).filter(o=>o.status==='READY'&&o.who!=='OWNER');
+  const P=$('#runPick');P.textContent='';const os=(wos&&wos.orders||[]).filter(o=>stOf(o)==='READY'&&o.who!=='OWNER');
   const sel=el('select');sel.id='runBot';sel.className='mini';sel.style.height='36px';
   BOTS().forEach(b=>{const o=txt('option','',b.label);o.value=b.id;sel.append(o)});
-  const g=BOTS().find(b=>b.id==='grok');if(g)sel.value='grok';
+  sel.value=BOTS()[0].id;
   const lab=el('label','chk');lab.append(txt('span','','Bot'),sel);P.append(lab);
   os.forEach(o=>{const l=el('label','chk');const c=el('input');c.type='checkbox';c.value=o.id;l.append(c,txt('span','',o.id+' · '+o.title));P.append(l)});
   if(!os.length)P.append(txt('p','sub','No READY work orders.'))}
 function logRun(icon,t){const r=el('div','r');r.append(txt('span','',icon),txt('span','',t));$('#runLog').append(r)}
-$('#runStart').onclick=async()=>{
-  if(run)return;const ids=$$('#runPick input:checked').map(c=>c.value).slice(0,5);if(!ids.length)return logRun('•','Tick at least one work order.');
-  const botId=$('#runBot').value;run={stop:false,ctrl:null};$('#runStart').disabled=true;$('#runStop').disabled=false;$('#runLog').textContent='';
+function nextBatch(){const os=(wos&&wos.orders)||[];const ok=id=>{const d=os.find(x=>x.id===id);return d&&['DONE','REVIEW','IN_PROGRESS'].includes(stOf(d))};
+  return os.filter(o=>o.who!=='OWNER'&&stOf(o)==='READY'&&(o.depends||[]).filter(x=>x!=='WO-00').every(ok)).slice(0,5).map(o=>o.id)}
+$('#buildRest').onclick=()=>{if(run)return;const ids=nextBatch();if(!ids.length)return logRun('•','Nothing ready: finish or mark the earlier orders (e.g. WO-01) first, or everything is done.');startRun(ids)};
+$('#runStart').onclick=()=>{if(run)return;const ids=$$('#runPick input:checked').map(c=>c.value).slice(0,5);if(!ids.length)return logRun('•','Tick at least one work order.');startRun(ids)};
+async function startRun(ids){
+  const botId=$('#runBot').value;run={stop:false,ctrl:null};$('#runStart').disabled=$('#buildRest').disabled=true;$('#runStop').disabled=false;$('#runLog').textContent='';
   newConv(botId);conv.title='Auto-build '+new Date().toLocaleTimeString();$('#runState').textContent='running';
   for(const id of ids){
-    if(run.stop)break;const o=wos.orders.find(x=>x.id===id);logRun('⏳',id+' sent to '+(BOTS().find(b=>b.id===botId)||{}).label);
-    run.ctrl=new AbortController();const r=await ask(o.brief,{bot:botId,signal:run.ctrl.signal});
-    $('#runLog').lastChild.firstChild.textContent=r.ok?'✅':'⛔';
+    if(run.stop)break;const o=wos.orders.find(x=>x.id===id);logRun('⏳',id+' · '+o.title+' → '+(BOTS().find(b=>b.id===botId)||{}).label);
+    setSt(id,'IN_PROGRESS');const brief=await enrich(o);
+    run.ctrl=new AbortController();const r=await ask(brief,{bot:botId,signal:run.ctrl.signal});
+    $('#runLog').lastChild.firstChild.textContent=r.ok?'✅':'⛔';if(r.ok)setSt(id,'REVIEW');else setSt(id,'READY');
     if(!r.ok){logRun('■','Stopped: '+id+' did not get a usable reply ('+(r.code===-1?'stopped':'HTTP '+r.code)+').');break}
     await new Promise(z=>setTimeout(z,2500))}
-  logRun('📄','Replies are in the chat "'+conv.title+'". Review drafts, then PROMOTE what passes.');
-  $('#runState').textContent='idle';$('#runStart').disabled=false;$('#runStop').disabled=true;run=null};
+  logRun('📄','Replies are in the chat "'+conv.title+'". Each module reply has Check · Save .js · Copy promote. Promote what passes, then Mark done.');
+  $('#runState').textContent='idle';$('#runStart').disabled=$('#buildRest').disabled=false;$('#runStop').disabled=true;run=null;renderBuild()}
 $('#runStop').onclick=()=>{if(run){run.stop=true;if(run.ctrl)run.ctrl.abort()}};
 
 /* ---------- boot ---------- */

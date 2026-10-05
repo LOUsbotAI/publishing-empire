@@ -18,7 +18,14 @@
    "who": "TEAM",
    "status": "READY",
    "depends": [],
-   "brief": "WORK ORDER WO-01: Census of real pages and endpoints\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nProduce $ROOT/supervised_dev/hub_modules/CENSUS.md. For each service in this list, record the real GET routes and one REAL sample response (trimmed, secrets masked): 1182 (/api/status, /api/live, /api/trainees, /api/state, /api/termux/exec/status, /api/owner-termux-r8r3/health), 11880 (/api/status, /api/live, any GET under /api/loubot/), 11770 (/loukey/status and gate state GET routes), 11883 (the snapshot route that returns screen_plain/history_plain), 6205, 11902, 1185, 18082, 18097.\nAlso list which old webroot pages (termux, trace, evidence, galaxy, loucode, gate, brain, architect, workspace, app_v3, app_v4) are still used and which data each one reads.\nClassify each item VERIFIED_EXISTING / HISTORICAL_CANDIDATE / SPEC_ONLY / UNKNOWN.\nEnd with: the exact GET URL each module WO-02..WO-07 should read.\n\nAUTHORITY: read-only. MUTATION=NO except writing the census file. No restarts, no POST, no 11884. MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED."
+   "brief": "WORK ORDER WO-01: Census of real pages and endpoints\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nProduce $ROOT/supervised_dev/hub_modules/CENSUS.md. For each service in this list, record the real GET routes and one REAL sample response (trimmed, secrets masked): 1182 (/api/status, /api/live, /api/trainees, /api/state, /api/termux/exec/status, /api/owner-termux-r8r3/health), 11880 (/api/status, /api/live, any GET under /api/loubot/), 11770 (/loukey/status and gate state GET routes), 11883 (the snapshot route that returns screen_plain/history_plain), 6205, 11902, 1185, 18082, 18097.\nAlso list which old webroot pages (termux, trace, evidence, galaxy, loucode, gate, brain, architect, workspace, app_v3, app_v4) are still used and which data each one reads.\nClassify each item VERIFIED_EXISTING / HISTORICAL_CANDIDATE / SPEC_ONLY / UNKNOWN.\nEnd with: the exact GET URL each module WO-02..WO-07 should read.\n\nAUTHORITY: read-only. MUTATION=NO except writing the census file. No restarts, no POST, no 11884. MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED.",
+   "samples": [
+    "http://127.0.0.1:1182/api/status",
+    "http://127.0.0.1:11880/api/status",
+    "http://127.0.0.1:11880/api/live",
+    "http://127.0.0.1:11770/loukey/status",
+    "cfg:termux.readback_url"
+   ]
   },
   {
    "id": "WO-02",
@@ -29,7 +36,12 @@
    "depends": [
     "WO-01"
    ],
-   "brief": "WORK ORDER WO-02: Termux screen module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'termux_view': shows the current tmux pane text (screen_plain) in a monospace card, refresh every 3s with a pause button, and a 'History' toggle (history_plain). Show the readback health and last-updated time. Add an 'Explain this' button that calls api.ask('Explain this Termux output and suggest the next safe step:\\n' + last 40 lines). NO input box: typing into Termux stays in 11884 owner-manual.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+   "brief": "WORK ORDER WO-02: Termux screen module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'termux_view': shows the current tmux pane text (screen_plain) in a monospace card, refresh every 3s with a pause button, and a 'History' toggle (history_plain). Show the readback health and last-updated time. Add an 'Explain this' button that calls api.ask('Explain this Termux output and suggest the next safe step:\\n' + last 40 lines). NO input box: typing into Termux stays in 11884 owner-manual.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts.",
+   "module": "termux_view",
+   "tile": "termux",
+   "samples": [
+    "cfg:termux.readback_url"
+   ]
   },
   {
    "id": "WO-03",
@@ -40,7 +52,13 @@
    "depends": [
     "WO-01"
    ],
-   "brief": "WORK ORDER WO-03: Journey / trace module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'journey': list recent traces (newest first) from the route found in WO-01 (/api/live or equivalent): trace id, status (COMPLETE/FAIL/RUNNING), duration, and each step (LOUIE -> BLUEBOT -> department -> result). Tap a trace to expand its steps. FAIL traces get an 'Ask BlueBot why it failed' button using api.ask. Refresh every 5s.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+   "brief": "WORK ORDER WO-03: Journey / trace module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'journey': list recent traces (newest first) from the route found in WO-01 (/api/live or equivalent): trace id, status (COMPLETE/FAIL/RUNNING), duration, and each step (LOUIE -> BLUEBOT -> department -> result). Tap a trace to expand its steps. FAIL traces get an 'Ask BlueBot why it failed' button using api.ask. Refresh every 5s.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts.",
+   "module": "journey",
+   "tile": "trace",
+   "samples": [
+    "http://127.0.0.1:11880/api/live",
+    "http://127.0.0.1:1182/api/live"
+   ]
   },
   {
    "id": "WO-04",
@@ -52,7 +70,12 @@
     "WO-01",
     "WO-00"
    ],
-   "brief": "WORK ORDER WO-04: Owner Gate status module (read-only)\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'gate_view': show current gate state (IDLE / WAITING_OWNER_GATE / APPROVED_EXECUTION_LOCKED ...), the exact action, target, hash and recommendation, plus LouKey status. Show BR37N2 state. Provide an 'Open ApprovalPad' button that opens the existing approval page (api.ask is NOT used for approval). This module must never POST or approve; approval stays in the ApprovalPad page.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+   "brief": "WORK ORDER WO-04: Owner Gate status module (read-only)\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'gate_view': show current gate state (IDLE / WAITING_OWNER_GATE / APPROVED_EXECUTION_LOCKED ...), the exact action, target, hash and recommendation, plus LouKey status. Show BR37N2 state. Provide an 'Open ApprovalPad' button that opens the existing approval page (api.ask is NOT used for approval). This module must never POST or approve; approval stays in the ApprovalPad page.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts.",
+   "module": "gate_view",
+   "tile": "gate",
+   "samples": [
+    "http://127.0.0.1:11770/loukey/status"
+   ]
   },
   {
    "id": "WO-05",
@@ -63,7 +86,13 @@
    "depends": [
     "WO-01"
    ],
-   "brief": "WORK ORDER WO-05: Team / trainees module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'team': render the trainees/agents list from 1182 /api/trainees (or the route WO-01 verified) as cards: name, role, department, model/lane, state, last activity. Group by department. A card button 'Give this agent a task' calls api.ask('@<name> ') so Louie writes the task in chat.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+   "brief": "WORK ORDER WO-05: Team / trainees module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'team': render the trainees/agents list from 1182 /api/trainees (or the route WO-01 verified) as cards: name, role, department, model/lane, state, last activity. Group by department. A card button 'Give this agent a task' calls api.ask('@<name> ') so Louie writes the task in chat.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts.",
+   "module": "team",
+   "tile": "team",
+   "samples": [
+    "http://127.0.0.1:1182/api/trainees",
+    "http://127.0.0.1:11880/api/status"
+   ]
   },
   {
    "id": "WO-06",
@@ -74,7 +103,12 @@
    "depends": [
     "WO-01"
    ],
-   "brief": "WORK ORDER WO-06: Evidence and receipts module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'evidence': list receipts/evidence that a verified GET route exposes (from WO-01). If no GET route exposes them, STOP and report: propose (do not build) the smallest read-only route, for owner approval. Each item: title, time, sha256, short preview.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+   "brief": "WORK ORDER WO-06: Evidence and receipts module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'evidence': list receipts/evidence that a verified GET route exposes (from WO-01). If no GET route exposes them, STOP and report: propose (do not build) the smallest read-only route, for owner approval. Each item: title, time, sha256, short preview.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts.",
+   "module": "evidence",
+   "tile": "evidence",
+   "samples": [
+    "http://127.0.0.1:1182/api/state"
+   ]
   },
   {
    "id": "WO-07",
@@ -85,7 +119,12 @@
    "depends": [
     "WO-01"
    ],
-   "brief": "WORK ORDER WO-07: LouCode drafts module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'loucode_view': list recent LouCode outputs (draft name, language, test result, verifier verdict, trace id) from the route WO-01 found. Show the draft text in a monospace card with a Copy button (navigator.clipboard.writeText is allowed). No run/execute button.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+   "brief": "WORK ORDER WO-07: LouCode drafts module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'loucode_view': list recent LouCode outputs (draft name, language, test result, verifier verdict, trace id) from the route WO-01 found. Show the draft text in a monospace card with a Copy button (navigator.clipboard.writeText is allowed). No run/execute button.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts.",
+   "module": "loucode_view",
+   "tile": "loucode",
+   "samples": [
+    "http://127.0.0.1:11880/api/live"
+   ]
   },
   {
    "id": "WO-08",
@@ -111,6 +150,73 @@
     "WO-05"
    ],
    "brief": "WORK ORDER WO-09: Accessibility and phone QA pass\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nFor each promoted module: test portrait and landscape, light and dark, keyboard-only (Tab, Enter, Escape returns to the page list), and 44px tap targets. Report issues per module with screenshots. Fix only inside the module files, as new candidates.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+  },
+  {
+   "id": "WO-11",
+   "title": "Warehouse module (native)",
+   "summary": "Rebuild 1182's Warehouse as a native screen.",
+   "who": "TEAM",
+   "status": "READY",
+   "depends": [
+    "WO-01"
+   ],
+   "module": "warehouse",
+   "tile": "f1182_warehouse",
+   "samples": [
+    "http://127.0.0.1:1182/api/state",
+    "http://127.0.0.1:1182/api/status"
+   ],
+   "brief": "WORK ORDER WO-11: Warehouse module (native)\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'warehouse': show what 1182's Warehouse surface shows (stored items, outputs, sizes, dates) from the GET route behind it (find it in the 1182 page/router source; read-only). Search box + newest first. If no GET route exists, STOP and propose one.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+  },
+  {
+   "id": "WO-12",
+   "title": "Projects module (native)",
+   "summary": "Rebuild 1182's Projects as a native screen.",
+   "who": "TEAM",
+   "status": "READY",
+   "depends": [
+    "WO-01"
+   ],
+   "module": "projects",
+   "tile": "f1182_projects",
+   "samples": [
+    "http://127.0.0.1:1182/api/state"
+   ],
+   "brief": "WORK ORDER WO-12: Projects module (native)\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'projects': list projects with status, last activity and linked work orders, from the GET route behind 1182's Projects surface (read-only). Tap a project to see its items. 'Ask BlueBot about this project' uses api.ask.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+  },
+  {
+   "id": "WO-13",
+   "title": "Outputs · Hold module (native)",
+   "summary": "See outputs and what is on HOLD, read-only.",
+   "who": "TEAM",
+   "status": "READY",
+   "depends": [
+    "WO-01"
+   ],
+   "module": "outputs",
+   "tile": "f1182_outputs",
+   "samples": [
+    "http://127.0.0.1:1182/api/state",
+    "http://127.0.0.1:11770/loukey/status"
+   ],
+   "brief": "WORK ORDER WO-13: Outputs · Hold module (native)\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'outputs': list outputs and items on HOLD with reason, time and trace id from the GET route behind 1182's Outputs · Hold. HOLD items get an 'Ask BlueBot why it is held' button (api.ask). No release/approve buttons: releasing stays in the Gate.\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
+  },
+  {
+   "id": "WO-14",
+   "title": "Swarm console module",
+   "summary": "Live view of the core swarm and coding agents.",
+   "who": "TEAM",
+   "status": "READY",
+   "depends": [
+    "WO-01"
+   ],
+   "module": "swarm",
+   "tile": "swarm",
+   "samples": [
+    "http://127.0.0.1:6205/health",
+    "http://127.0.0.1:11880/api/status"
+   ],
+   "brief": "WORK ORDER WO-14: Swarm console module\nFrom: Louie (owner) via Lousta Hub 11082 -> BlueBot -> Engineering/LouCode\n\nGOAL\nBuild module 'swarm': show Manager V2, Brain Challenger V2 (SUGGEST_ONLY), G1 and each coding agent with state, lane and last result, from the GET routes WO-01 found (Brain hub 6205, team bus 11904, 11880 status). Read-only. 'Give this agent a task' calls api.ask('@<name> ').\n\nMODULE CONTRACT (must follow exactly)\n- Deliver ONE file: <name>.js (lowercase, a-z 0-9 _). Copy the shape of modules/services.js in the hub folder.\n- It must call LoustaHub.register({id:'<name>', title:'...', render(el, api){...}}).\n- Read data ONLY with: const r = await api.get('http://127.0.0.1:<port>/<path>')  -> {ok, status, data}\n- Poll with api.every(ms, fn). Build elements with api.el(tag, class, text). Hand text to Louie with api.ask(text).\n- Use hub CSS classes: card, stat, tile, tiles, stack, btn, btn pri, pill, dot UP/DOWN/ERROR, sub, sec.\n- FORBIDDEN: fetch, XMLHttpRequest, WebSocket, innerHTML, eval, POST/PUT/DELETE, port 11884, tmux, run-approved, /loukey/auto, /api/decision, any non-127.0.0.1 URL.\n- Never guess JSON keys: use only keys you saw in a real response (show the sample in your report).\n- Write the file as a candidate under $ROOT/supervised_dev/hub_modules/<name>/ . Do NOT copy it into the hub. Louie promotes it.\n- Before reporting: run python3 <hub>/tools/check_module.py <file> and include the output.\nREPORT BACK: file path, sha256, check output, sample of the real data you used, what you could not verify.\nAUTHORITY: MAX_EXECUTING=1, SELF_APPROVAL=NO, PRODUCTION=LOCKED, BRAIN=SUGGEST_ONLY. Read-only inspection only; no service restarts."
   },
   {
    "id": "WO-10",

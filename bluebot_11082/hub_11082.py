@@ -115,7 +115,7 @@ class Hub(BaseHTTPRequestHandler):
         if path == "/hub/get":
             return self.read_proxy()
         if path == "/hub/status":
-            return self.send_json(200, {"version": VERSION, "port": PORT, "methods": ["GET", "HEAD", "POST /hub/chat only"],
+            return self.send_json(200, {"version": VERSION, "port": PORT, "dir": HERE, "methods": ["GET", "HEAD", "POST /hub/chat only"],
                                         "execution": "NONE", "production": "LOCKED"})
         self.send_json(404, {"error": "NOT_FOUND"})
 
