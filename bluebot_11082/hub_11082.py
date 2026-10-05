@@ -33,7 +33,7 @@ STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/modules.json": ("modules.json", "application/json"),
           "/work_orders.json": ("work_orders.json", "application/json")}
 VERSION = "BLUEBOT_HUB_11082_V3"
-MAX_CHAT_BYTES = 64 * 1024
+MAX_CHAT_BYTES = 3 * 1024 * 1024   # room for one compressed screenshot
 MAX_READ_BYTES = 2 * 1024 * 1024
 NEVER_PORTS = {11884}          # owner-manual input: never readable or reachable through the hub
 MODULE_RE = re.compile(r"^/modules/([a-z0-9_]{1,40})\.js$")

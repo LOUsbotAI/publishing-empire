@@ -2,6 +2,15 @@
 
 One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot pages together.
 
+- **Chat v2 (Claude/ChatGPT style):**
+  - **Multi-bot:** BlueBot, Grok and Grok Image, picked from the bot chip. Add more in `modules.json` → `bots`.
+  - **Conversations:** saved on the phone.
+  - **Replies:** formatted text with copy buttons on code, plus Stop, Retry and Speak.
+  - **Voice:** dictation fills the box and never sends by itself.
+  - **Screen:** one-frame snapshot on desktop, or a screenshot from the gallery on a phone.
+  - **Live Termux:** read-only panel.
+  - **Command palette:** Ctrl/⌘+K.
+- **Build → Auto-build run:** tick READY work orders and pick a bot (Grok by default). They're sent one at a time while you watch, at most 5 per run. It stops on the first failure or when you press Stop. Replies are drafts; nothing goes live without `PROMOTE_MODULE.sh`.
 - **Chat is native.** Messages go to the existing BlueBot chat route (11880 `/api/chat`). It's the same behaviour 1182 chat already has.
 - **Everything (More):** health dashboard plus every page, grouped and searchable.
 - **Older pages** open full screen in a clean viewer with Back, Reload and Open. You never get two nav bars.
@@ -62,6 +71,15 @@ WB="$HOME/bluebits/empire_director_v1/supervised_dev/1182_bluebot_chat_installat
 grep -n -B2 -A15 'api/chat"' "$WB/app_trainee.py" | head -60
 ```
 Then set `"chat": {"message_key": "<field>"}` in `modules.json`. No restart needed.
+
+## What still needs the census (left off on purpose until the routes are confirmed)
+| Feature | Needs | Setting |
+|---|---|---|
+| Live Termux panel | 11883 snapshot route | `termux.readback_url` |
+| Screenshots sent to bots | 11880 image field | `chat.image_key` |
+| More chatbots (codefix agents, trainees) | their @names | `bots` |
+| **Supervised keyboard** (BlueBot proposes, you tap to type it into Termux) | 11884 contract (Origin, header, nonce) | not built: owner-manual boundary, needs your explicit go-ahead |
+| Auto navigation of other phone apps | Android accessibility/adb, not possible from a browser | separate authority system, not in this app |
 
 ## Add or change pages
 Edit `modules.json`. Live tile: `{"id","label","icon","category","url":"http://127.0.0.1:<port>/..."}`.

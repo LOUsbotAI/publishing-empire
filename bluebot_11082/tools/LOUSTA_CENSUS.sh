@@ -80,6 +80,18 @@ grep -rhoE 'https?://[A-Za-z0-9.-]+' --include='*.py' "$WB" 2>/dev/null | grep -
 echo "--- 1182 router tmux routes"
 grep -rnE 'tmux/send|send-keys|load-buffer' "$ROOT/loucorp_dashboard_v1/owner_experience_v1/self_build_control_loop_v1/promotions/1182_R4_RESERVED_SHELL_CANDIDATE_20260925_084929/runtime/" 2>/dev/null | cut -c1-200 | head -10
 
+sec "E2. WHAT THE NEW CHAT NEEDS (source files only, ports not called)"
+UI="$ROOT/supervised_dev/1182_r4_chat_integration_v1/R4_CHAT_INTEGRATION_V1_20260926/ui"
+echo "--- 11883 readback routes + keys"
+grep -nE 'path ==|startswith\(|screen_plain|history_plain|def do_GET' "$UI/owner_termux_readback_r8_r3.py" 2>/dev/null | cut -c1-160 | head -20
+echo "--- 11884 input contract (read source only; port NOT called)"
+grep -nE 'path ==|Origin|X-Lousta|nonce|/text|/key|def do_|ALLOW' "$UI/owner_termux_input_r8_r3.py" 2>/dev/null | cut -c1-160 | head -30
+echo "--- 11880 image / attachment fields"
+grep -nE 'image|attachment|base64|data:image' "$WB/app_trainee.py" 2>/dev/null | cut -c1-160 | head -15
+echo "--- 11880 @-prefix bots / trainees / codefix agents"
+grep -noE '"@[a-z][a-z0-9_-]{1,24}' "$WB/app_trainee.py" 2>/dev/null | sort -u -t: -k3 | head -30
+grep -nE 'CODEFIX|TRAINEE|ROLE_PROMPT' "$WB/app_trainee.py" 2>/dev/null | cut -c1-140 | head -15
+
 sec "F. DOWNLOADS: BLUEBOT PROJECTS"
 for D in /storage/emulated/0/Download "$HOME/storage/downloads"; do
   [ -d "$D" ] && { DL="$D"; break; }

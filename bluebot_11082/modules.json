@@ -428,6 +428,38 @@
  "chat": {
   "url": "http://127.0.0.1:11880/api/chat",
   "message_key": "message",
-  "_verify": "Confirm message_key with the discovery block in README"
+  "_verify": "Confirm message_key with the discovery block in README",
+  "image_key": "",
+  "_image_note": "Leave empty until the census shows which field 11880 accepts for images. Empty = screenshots are previewed locally but not sent."
+ },
+ "bots": [
+  {
+   "id": "bluebot",
+   "label": "BlueBot",
+   "icon": "♣",
+   "prefix": "",
+   "desc": "Manager. Routes to the right department."
+  },
+  {
+   "id": "grok",
+   "label": "Grok",
+   "icon": "✶",
+   "prefix": "@grok ",
+   "desc": "Grok lane on 11880 (external network: owner decision WO-00)."
+  },
+  {
+   "id": "grok_image",
+   "label": "Grok Image",
+   "icon": "◐",
+   "prefix": "@grok-image ",
+   "desc": "Image generation lane on 11880."
+  }
+ ],
+ "_bots_note": "Each bot is a prefix on the same 11880 chat route. Only @grok and @grok-image are proven in the 11880 log; add codefix agents / trainees here after the census confirms their names.",
+ "termux": {
+  "readback_url": "",
+  "screen_key": "screen_plain",
+  "history_key": "history_plain",
+  "_note": "Set readback_url to the 11883 snapshot GET route from the census (WO-01). Supervised keyboard (11884) is not wired: owner-manual only."
  }
 }
