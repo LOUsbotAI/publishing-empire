@@ -66,6 +66,7 @@ It finds the running hub and checks what answers on the phone (GET only). It wor
 - BlueBot's chat and image fields
 - every `@bot` BlueBot knows, each given its own colour and icon
 - your coding agents that serve a page, added as tiles under **Agents**
+- **the features inside every local web page**: it reads each page's own menu (links, tabs and section buttons such as 1182's Command, Live, Work, Warehouse, Chat, Projects, Outputs) and adds one tile per feature under a section named after that page
 
 It shows the proposed changes and writes `modules.json` only after you type **y**, keeping a backup and printing a rollback line. Re-run it whenever you start more services. It never POSTs, restarts anything or touches 11884.
 

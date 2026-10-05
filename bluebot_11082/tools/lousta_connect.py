@@ -131,6 +131,37 @@ def coding_agents(live_ports):
     return out[:60]
 
 
+def page_features(port):
+    """Read a local web page's own menu: links, tabs and section buttons -> feature tiles."""
+    code, html = get("http://127.0.0.1:%d/" % port, 2.5)
+    if code != 200 or "<" not in html[:2000]:
+        return None, []
+    tm = re.search(r"<title[^>]*>(.*?)</title>", html, re.S | re.I)
+    title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", tm.group(1))).strip()[:40] if tm else ""
+    feats = []
+    def clean(t):
+        return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t)).replace("&amp;", "&").strip()[:28]
+    for m in re.finditer(r"""<a\b[^>]*href=["']([^"']+)["'][^>]*>(.*?)</a>""", html, re.S | re.I):
+        href, label = m.group(1).strip(), clean(m.group(2))
+        if not label or href.startswith(("http://", "https://", "mailto:", "javascript:", "//")) and "127.0.0.1:%d" % port not in href:
+            continue
+        if href in ("#", "/") or href.endswith((".css", ".js", ".png", ".ico")):
+            continue
+        url = href if href.startswith("http") else "http://127.0.0.1:%d%s%s" % (port, "/" if href.startswith("#") else "", href if href.startswith(("/", "#")) else "/" + href)
+        feats.append((label, url))
+    for m in re.finditer(r"""<(?:button|div|li|span|a)\b[^>]*data-(?:tab|view|panel|route|section|surface|page|target)=["']([^"']+)["'][^>]*>(.*?)</(?:button|div|li|span|a)>""", html, re.S | re.I):
+        val, label = m.group(1).strip(), clean(m.group(2))
+        if label and not re.search(r"close|cancel|minimi[sz]e|×|✕", label, re.I):
+            feats.append((label, "http://127.0.0.1:%d/#%s" % (port, val.lstrip("#"))))
+    seen, out = set(), []
+    for label, url in feats:
+        k = label.lower()
+        if k not in seen and len(label) > 1:
+            seen.add(k)
+            out.append((label, url))
+    return title, out[:20]
+
+
 def main():
     yes = "--yes" in sys.argv
     hub = find_hub(sys.argv[1:])
@@ -215,6 +246,27 @@ def main():
                 new["modules"].append({"id": mid, "label": name, "icon": "🤖", "category": "Agents", "url": "http://127.0.0.1:%d/" % a["port"]})
                 mids.add(mid)
                 changes.append("tile Agents/%s :%d" % (name, a["port"]))
+
+    print("\n6. FEATURES INSIDE EACH LOCAL WEB PAGE (menus, tabs, sections)")
+    for p in sorted(live):
+        if p in NEVER or p in (11437, 11438):
+            continue
+        title, feats = page_features(p)
+        if not feats:
+            continue
+        cat = "%s (:%d)" % (title or ports.get(p, "Page"), p)
+        print("   :%d %s -> %s" % (p, title or "", ", ".join(f[0] for f in feats)))
+        urls = {m.get("url") for m in new["modules"]}
+        for i, (label, url) in enumerate(feats):
+            if url in urls:
+                continue
+            mid = re.sub(r"[^a-z0-9_]", "_", ("f%d_%s" % (p, label)).lower())[:40]
+            if mid in mids:
+                continue
+            new["modules"].append({"id": mid, "label": label.title() if label.isupper() else label, "icon": "◇", "category": cat, "url": url})
+            mids.add(mid)
+            urls.add(url)
+            changes.append("tile %s / %s" % (cat, label))
 
     print("\n==================== PROPOSED CONNECTIONS ====================")
     if not changes:

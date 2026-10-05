@@ -3,8 +3,8 @@
  "modules": [
   {
    "id": "chat",
-   "label": "Classic Chat",
-   "icon": "💬",
+   "label": "Command Center",
+   "icon": "⌘",
    "url": "http://127.0.0.1:1182/",
    "primary": false,
    "category": "Core"
