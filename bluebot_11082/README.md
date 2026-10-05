@@ -13,6 +13,21 @@ One modern app at `http://127.0.0.1:11082/` that brings all the separate BlueBot
   - **Screen:** one-frame snapshot on desktop, or a screenshot from the gallery on a phone.
   - **Live Termux:** read-only panel.
   - **Command palette:** Ctrl/⌘+K.
+- **Code tab: Termux script loop.**
+  1. Describe the task and pick a coding bot. **Write script** returns one Termux-ready bash script.
+  2. The app checks it before you copy it and rates it **READ ONLY / MUTATES / DANGER**. It flags:
+     - sudo
+     - `rm -rf` on home or root
+     - `curl | bash`
+     - 11884 or gate paths
+     - `set -e` or `exit` at the top level
+     - nano
+     - pkill
+     - new tmux sessions
+     - heredocs that are never closed
+  3. You run it in Termux, then paste the output or tap **Pull from Termux** (read-only 11883, once configured). Error lines are counted.
+  4. **Fix & next input** sends the script and its output to the fixer agent. It replies with the ROOT CAUSE and a corrected script, or DONE plus the next step. Every round is kept (v1, Fix 1, Fix 2…), up to 8.
+  5. **Auto-fix when output arrives** watches Live Termux for the script's PASTE END and runs the fix round for you. It never runs anything in Termux; you always paste and run.
 - **Build → Auto-build run:** tick READY work orders and pick a bot (Grok by default). They're sent one at a time while you watch, at most 5 per run. It stops on the first failure or when you press Stop. Replies are drafts; nothing goes live without `PROMOTE_MODULE.sh`.
 - **Chat is native.** Messages go to the existing BlueBot chat route (11880 `/api/chat`). It's the same behaviour 1182 chat already has.
 - **Everything (More):** health dashboard plus every page, grouped and searchable.

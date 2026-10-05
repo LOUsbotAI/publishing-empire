@@ -217,6 +217,23 @@ body.viewing .nav{display:none}
 .msg.bot .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:#fff;background:var(--bc);box-shadow:0 0 0 3px color-mix(in srgb,var(--bc) 25%,transparent);letter-spacing:0}
 .msg.bot.err{--bc:var(--down)}
 .li .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--bc,var(--card2))}
+.cg{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.cg textarea{width:100%;min-height:84px;resize:vertical;border-radius:14px;border:1px solid var(--line2);background:var(--card);padding:12px;outline:0;line-height:1.4}
+.cg textarea.mono{font:12.5px/1.45 ui-monospace,monospace;min-height:120px}
+.cg .rowx{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cg select{height:40px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--text);padding:0 10px}
+.script pre{margin:0;max-height:52vh;overflow:auto;padding:12px;font:12.5px/1.5 ui-monospace,monospace;white-space:pre;background:#05060a;color:#e6edf3;border-radius:0 0 14px 14px}
+.script{border:1px solid var(--line2);border-radius:16px;overflow:hidden;background:var(--card)}
+.script .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line)}
+.risk{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:4px 8px;border-radius:999px}
+.risk.READ_ONLY{background:color-mix(in srgb,var(--up) 25%,transparent)}.risk.MUTATES{background:color-mix(in srgb,var(--warn) 30%,transparent)}.risk.DANGER{background:color-mix(in srgb,var(--down) 35%,transparent)}
+.warns{display:grid;gap:4px;font-size:12.5px;color:var(--dim);padding:8px 12px;border-bottom:1px solid var(--line)}
+.warns .w{color:var(--warn)}.warns .x{color:var(--down)}
+.diag{font-size:13.5px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.rounds{display:flex;gap:6px;flex-wrap:wrap}
+.rounds button{height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--card);font-size:12px}
+.rounds button[aria-current="true"]{border-color:var(--a1);color:var(--text)}
+.errc{font-size:12px;color:var(--dim)}.errc b{color:var(--down)}
 /* native modules + build queue */
 .native{position:absolute;inset:0;overflow:auto;padding:16px 16px 40px;background:var(--bg);display:none}
 .native.on{display:block}
@@ -305,6 +322,32 @@ body.viewing .nav{display:none}
   </div>
 </main>
 
+<main class="view" id="codeView" aria-label="Code">
+  <div class="wrap cg">
+    <h1>Code <span class="g">for Termux</span></h1>
+    <p class="sub" style="margin:0">Describe it → a coding bot writes the script → you run it in Termux → paste or pull the output → the fixer agent corrects it and writes the next input.</p>
+    <textarea id="cgTask" placeholder="What should the script do? e.g. Check which BlueBot services are down and show their last log lines" aria-label="Task"></textarea>
+    <div class="rowx">
+      <select id="cgBot" aria-label="Coding bot"></select>
+      <label class="chk" style="padding:0"><input type="checkbox" id="cgRO" checked> Read-only</label>
+      <span class="grow" style="flex:1"></span>
+      <button class="btn pri" id="cgGen">Write script</button>
+    </div>
+    <div class="rounds" id="cgRounds"></div>
+    <div id="cgOut"></div>
+    <div class="card" id="cgRun" hidden>
+      <div class="sec" style="margin:0 0 8px"><h2>Termux output</h2><span class="errc" id="cgErrc"></span></div>
+      <textarea class="mono" id="cgOutput" placeholder="Run the script in Termux, then paste what it printed here (or Pull from Termux)." aria-label="Termux output"></textarea>
+      <div class="rowx" style="margin-top:8px">
+        <button class="btn" id="cgPull">Pull from Termux</button>
+        <label class="chk" style="padding:0"><input type="checkbox" id="cgAuto"> Auto-fix when output arrives</label>
+        <span class="grow" style="flex:1"></span>
+        <button class="btn pri" id="cgFix">Fix &amp; next input</button>
+      </div>
+    </div>
+  </div>
+</main>
+
 <main class="view" id="buildView" aria-label="Build">
   <div class="wrap">
     <h1>Build</h1>
@@ -387,7 +430,7 @@ $('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(m
   const nx=cur==='light'?'dark':'light';document.documentElement.dataset.theme=nx;store('lousta.theme',nx)};
 
 /* nav: Chat | Code | Work | Build | More */
-const NAV=[['chat','Chat'],['code','Code','loucode'],['work','Work','workbench'],['build','Build'],['more','More']];
+const NAV=[['chat','Chat'],['code','Code'],['work','Work','workbench'],['build','Build'],['more','More']];
 NAV.forEach(([id,label,mod])=>{
   const b=el('button','',svg(id)+'<span></span>');b.lastChild.textContent=label;b.dataset.tab=id;
   b.onclick=()=>mod?openPage(mod,b):go(id);$('#nav').appendChild(b)});
@@ -395,7 +438,8 @@ function go(id){
   closeViewer(true);tab=id;
   $$('.view').forEach(v=>v.classList.toggle('on',v.id===id+'View'));
   $('#composer').hidden=id!=='chat';
-  $('#viewName').textContent={chat:'Chat',more:'Everything',build:'Build'}[id]||'';
+  $('#viewName').textContent={chat:'Chat',more:'Everything',build:'Build',code:'Code'}[id]||'';
+  if(id==='code')cgInit();
   if(id==='build')renderBuild();
   markNav(id);
 }
@@ -783,6 +827,92 @@ async function renderBuild(){
       b.onclick=()=>api.ask(o.brief);a.append(b);c.append(a)}
     list.appendChild(c)});
 }
+
+/* ---------- Code: Termux script loop with error-correcting agent ----------
+   Writes scripts and corrections through the same chat route. It never runs anything:
+   Louie copies the script into Termux. Output comes back by paste or read-only pull (11883). */
+const CG_RULES='RULES: Output exactly ONE ```bash code block for Termux on Android (no root, no sudo, no apt unless asked). '+
+ 'Start with: export PATH="/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets" ; a printf PASTE START banner; echo MUTATION=, EXECUTION=, PRODUCTION=LOCKED lines. '+
+ 'Use heredocs, never nano. Do not use set -e or exit at top level (it closes the interactive shell). Never touch port 11884, tmux send-keys, run-approved, /loukey/auto, or restart services unless the task says so. '+
+ 'End with a printf PASTE END banner and NEXT= line. After the code block write max 3 short lines: what it does, what it changes, rollback.';
+let cg=null;try{cg=JSON.parse(recall('lousta.code')||'null')}catch(e){cg=null}
+const cgSave=()=>store('lousta.code',JSON.stringify(cg));
+function cgInit(){
+  const sel=$('#cgBot');if(!sel.options.length){BOTS().forEach(b=>{const o=txt('option','',(b.icon||'')+' '+b.label);o.value=b.id;sel.append(o)});
+    const pref=BOTS().find(b=>/code|fix/i.test(b.id));if(pref)sel.value=pref.id}
+  if(cg){$('#cgTask').value=cg.task||'';cgDraw()}}
+function extractCode(t){const m=String(t).match(/```(?:bash|sh|shell)?\s*\n([\s\S]*?)```/);return m?m[1].replace(/\n$/,''):null}
+function lint(code){
+  const W=[],X=[];const has=r=>r.test(code);
+  if(has(/\bsudo\b/))X.push('uses sudo (no root in Termux)');
+  if(has(/rm\s+-[a-z]*r[a-z]*f?\s+(\/|~|\$HOME)(\s|$|\/\s)/i))X.push('recursive delete of a home/root path');
+  if(has(/curl[^|\n]*\|\s*(ba)?sh/))X.push('pipes a download into a shell');
+  if(has(/11884|send-keys|run-approved|stage-approved|\/loukey\/auto|\/api\/decision/))X.push('touches the owner-manual input or the gate/execution path');
+  if(has(/^\s*set\s+-e/m))W.push('set -e at top level can close your Termux session on error');
+  if(has(/^\s*exit\b/m))W.push('top-level exit closes the interactive shell');
+  if(has(/\bnano\b|\bvim?\b/))W.push('opens an editor (use heredocs)');
+  if(has(/\b(pkill|killall|kill\s+-9)\b/))W.push('kills processes');
+  if(has(/tmux[^\n]*(new-session|kill-server|kill-session)/))W.push('creates or kills a tmux session');
+  if(has(/\brm\b|\bmv\b|>\s*[^&\s/]|\bsed\s+-i\b|\bcp\b|\bmkdir\b|\bchmod\b|\btee\b/))W.push('changes files');
+  if(has(/\b(nohup|uvicorn|python3?\s+-m\s+http|systemctl|pm2)\b/))W.push('starts or restarts a service');
+  if(!has(/PASTE START/))W.push('no PASTE START banner');
+  if(!has(/PATH=/))W.push('PATH not normalised');
+  const heredocs=[...code.matchAll(/<<-?\s*'?"?([A-Z_]+)'?"?/g)].map(m=>m[1]);
+  heredocs.forEach(h=>{if(!new RegExp('^'+h+'\\s*$','m').test(code))X.push('heredoc '+h+' is never closed')});
+  const q=(code.replace(/\\'/g,'').match(/'/g)||[]).length;if(q%2&&!heredocs.length)W.push('odd number of single quotes');
+  const risk=X.length?'DANGER':W.some(w=>/changes files|kills|starts|tmux/.test(w))?'MUTATES':'READ_ONLY';
+  return {risk,W,X}}
+function errScan(out){const lines=String(out).split('\n');const bad=lines.filter(l=>/(error|traceback|no such file|command not found|permission denied|syntax error|not found|HOLD=|FAIL|exception|refused|denied|cannot)/i.test(l)&&!/=PASS|ERRORS?=0|NO_ERROR/i.test(l));
+  return {bad,pass:/PASS|PASTE END/i.test(out)&&!bad.length}}
+function cgDraw(){
+  const R=$('#cgRounds');R.textContent='';const O=$('#cgOut');O.textContent='';
+  if(!cg||!cg.rounds.length){$('#cgRun').hidden=true;return}
+  cg.rounds.forEach((r,i)=>{const b=txt('button','',(i?'Fix '+i:'v1')+(r.code?'':' · no code'));b.setAttribute('aria-current',String(i===cg.cur));b.onclick=()=>{cg.cur=i;cgSave();cgDraw()};R.append(b)});
+  const r=cg.rounds[cg.cur];const box=el('div','script');const hd=el('div','hd');
+  const bo=botOf(r.bot)||{};const av=txt('span','av',bo.icon||'•');av.style.cssText='width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;background:'+(bo.color||'var(--a2)');
+  hd.append(av,txt('b','',(cg.cur?'Correction '+cg.cur:'Script v1')+' · '+(bo.label||r.bot)));
+  if(r.code){const L=lint(r.code);hd.append(txt('span','risk '+L.risk,L.risk.replace('_',' ')),txt('span','errc',r.code.split('\n').length+' lines'));
+    const sp=el('span');sp.style.flex='1';hd.append(sp);const c=txt('button','btn pri','Copy for Termux');c.onclick=()=>{copy(r.code,null);c.textContent='Copied ✓';setTimeout(()=>c.textContent='Copy for Termux',1500)};hd.append(c);box.append(hd);
+    if(r.diag)box.append(txt('div','diag',r.diag));
+    if(L.X.length||L.W.length){const w=el('div','warns');L.X.forEach(x=>w.append(txt('span','x','⛔ '+x)));L.W.forEach(x=>w.append(txt('span','w','⚠ '+x)));box.append(w)}
+    box.append(txt('pre','',r.code))}
+  else{box.append(hd);box.append(md(r.reply||''))}
+  O.append(box);
+  $('#cgRun').hidden=!r.code;$('#cgOutput').value=r.output||'';cgErrShow()}
+function cgErrShow(){const out=$('#cgOutput').value;if(!out.trim()){$('#cgErrc').textContent='';return}const e=errScan(out);
+  $('#cgErrc').textContent='';if(e.bad.length){$('#cgErrc').append(txt('b','',e.bad.length+' error line'+(e.bad.length>1?'s':'')))}else $('#cgErrc').textContent=e.pass?'looks successful':'no errors spotted'}
+$('#cgOutput').addEventListener('input',()=>{if(cg){cg.rounds[cg.cur].output=$('#cgOutput').value;cgSave()}cgErrShow()});
+async function cgAsk(content,botId){
+  const b=BOTS().find(x=>x.id===botId)||bot();const key=(cfg.chat&&cfg.chat.message_key)||'message';
+  const {code,j}=await postChat({[key]:(b.prefix||'')+content,conversation_id:cg.id,trace_id:uid('tr'),source:'hub_11082_code',bot:b.id});
+  const reply=code>=200&&code<300?pickReply(j):null;return {reply,code}}
+function cgBusy(v,label){['#cgGen','#cgFix'].forEach(x=>$(x).disabled=v);$('#cgGen').textContent=v&&label==='gen'?'Writing…':'Write script';$('#cgFix').textContent=v&&label==='fix'?'Fixing…':'Fix & next input'}
+$('#cgGen').onclick=async()=>{
+  const task=$('#cgTask').value.trim();if(!task)return $('#cgTask').focus();
+  cg={id:uid('code'),task,ro:$('#cgRO').checked,rounds:[],cur:0};cgBusy(true,'gen');
+  const prompt='[LOUCODE · TERMUX SCRIPT REQUEST]\nTask: '+task+'\nMode: '+(cg.ro?'READ-ONLY (inspect only, change nothing)':'may change files if the task needs it; say exactly what changes')+'\n'+CG_RULES;
+  const botId=$('#cgBot').value;const {reply,code}=await cgAsk(prompt,botId);cgBusy(false);
+  cg.rounds.push({bot:botId,reply:reply||('No reply (HTTP '+code+')'),code:reply?extractCode(reply):null,diag:reply?reply.replace(/```[\s\S]*?```/g,'').trim().slice(0,400):''});cg.cur=0;cgSave();cgDraw()};
+$('#cgFix').onclick=async()=>{
+  if(!cg)return;const r=cg.rounds[cg.cur];const out=$('#cgOutput').value.trim();if(!out)return $('#cgOutput').focus();
+  if(cg.rounds.length>=8){$('#cgErrc').textContent='8 rounds reached. Rethink the task or ask in Chat.';return}
+  cgBusy(true,'fix');const tail=out.split('\n').slice(-120).join('\n');
+  const prompt='[LOUCODE · ERROR CORRECTION round '+cg.rounds.length+']\nOriginal task: '+cg.task+'\nMode: '+(cg.ro?'READ-ONLY':'may change files')+
+    '\nScript that was run:\n```bash\n'+r.code+'\n```\nTermux output (last 120 lines):\n```\n'+tail+'\n```\n'+
+    'First write 2-3 lines: ROOT CAUSE and what you changed. If the output shows the task fully succeeded, write DONE and give the next logical step as a new script. Then '+CG_RULES;
+  const botId=$('#cgBot').value;const {reply,code}=await cgAsk(prompt,botId);cgBusy(false);
+  cg.rounds.push({bot:botId,reply:reply||('No reply (HTTP '+code+')'),code:reply?extractCode(reply):null,diag:reply?reply.replace(/```[\s\S]*?```/g,'').trim().slice(0,400):''});
+  cg.cur=cg.rounds.length-1;cgSave();cgDraw()};
+/* pull output: read-only snapshot of pane %0, trimmed to this script's PASTE START..END if present */
+let cgWatch=null;
+async function cgPullOnce(){const T=cfg.termux||{};if(!T.readback_url){$('#cgErrc').textContent='Live Termux not connected yet. Paste the output, or set termux.readback_url (census).';return null}
+  const r=await api.get(T.readback_url);const h=r.ok&&r.data&&typeof r.data==='object'?(r.data[T.history_key]||r.data[T.screen_key]):null;if(typeof h!=='string')return null;
+  const i=h.lastIndexOf('PASTE START');const seg=i>=0?h.slice(h.lastIndexOf('\n',i)+1):h.split('\n').slice(-150).join('\n');return seg}
+$('#cgPull').onclick=async()=>{const seg=await cgPullOnce();if(seg!=null){$('#cgOutput').value=seg;$('#cgOutput').dispatchEvent(new Event('input'))}};
+$('#cgAuto').onchange=e=>{clearInterval(cgWatch);cgWatch=null;if(!e.target.checked)return;
+  cgWatch=setInterval(async()=>{if(tab!=='code'||!cg)return;const seg=await cgPullOnce();if(!seg)return;
+    const r=cg.rounds[cg.cur];if(/PASTE END/.test(seg)&&seg!==r.output){$('#cgOutput').value=seg;$('#cgOutput').dispatchEvent(new Event('input'));
+      if(!errScan(seg).pass)$('#cgFix').click();else{$('#cgErrc').textContent='Looks successful. Auto-fix paused.';e.target.checked=false;clearInterval(cgWatch)}}},4000)};
 
 /* ---------- auto-build run: sends chosen briefs one at a time, owner watching ----------
    Same single chat route; replies are drafts. Stops on first failure or on Stop. Max 5 per run. */
