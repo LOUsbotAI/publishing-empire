@@ -1,0 +1,631 @@
+{
+ "_note": "Edit to add/remove pages. Live tiles need url=http://127.0.0.1:<port>/... . status=PLANNED tiles show PLANNED / NOT CONNECTED and never load anything. primary=true (max 4) go in the bottom bar; everything else is under More.",
+ "modules": [
+  {
+   "id": "chat",
+   "label": "Command Center",
+   "icon": "⌘",
+   "url": "http://127.0.0.1:1182/",
+   "primary": false,
+   "category": "Core"
+  },
+  {
+   "id": "loucode",
+   "label": "Code",
+   "icon": "⌘",
+   "url": "http://127.0.0.1:1182/loucode.html",
+   "category": "Core",
+   "primary": true
+  },
+  {
+   "id": "workbench",
+   "label": "Work",
+   "icon": "🛠",
+   "url": "http://127.0.0.1:1182/workbench",
+   "primary": true,
+   "category": "Core"
+  },
+  {
+   "id": "workspace",
+   "label": "Workspace",
+   "icon": "▤",
+   "url": "http://127.0.0.1:1182/workspace.html",
+   "category": "Core",
+   "primary": false
+  },
+  {
+   "id": "command",
+   "label": "Command",
+   "icon": "♣",
+   "url": "http://127.0.0.1:1182/app_v4.html",
+   "primary": false,
+   "category": "Core"
+  },
+  {
+   "id": "eng_termux_portal",
+   "label": "Engineering Portal",
+   "icon": "⚙",
+   "category": "Core",
+   "url": "http://127.0.0.1:1182/bluebot-engineering-termux/portal/index.html"
+  },
+  {
+   "id": "gate",
+   "label": "Gate",
+   "icon": "🔒",
+   "url": "http://127.0.0.1:1182/approvalpad.html",
+   "primary": false,
+   "category": "Control & Gate"
+  },
+  {
+   "id": "services",
+   "label": "Services",
+   "icon": "◉",
+   "category": "Observe",
+   "native": "services"
+  },
+  {
+   "id": "termux",
+   "label": "Termux",
+   "icon": "›_",
+   "url": "http://127.0.0.1:1182/termux.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "trace",
+   "label": "Trace",
+   "icon": "≡",
+   "url": "http://127.0.0.1:1182/trace.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "evidence",
+   "label": "Evidence",
+   "icon": "▣",
+   "url": "http://127.0.0.1:1182/evidence.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "galaxy",
+   "label": "Galaxy",
+   "icon": "✦",
+   "url": "http://127.0.0.1:1182/galaxy.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "brain",
+   "label": "Brain",
+   "icon": "🧠",
+   "url": "http://127.0.0.1:1182/brain.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "architect",
+   "label": "Architect",
+   "icon": "◫",
+   "url": "http://127.0.0.1:1182/architect.html",
+   "category": "Observe",
+   "primary": false
+  },
+  {
+   "id": "app_v3",
+   "label": "Command v3",
+   "icon": "♧",
+   "url": "http://127.0.0.1:1182/app_v3.html",
+   "category": "Core",
+   "primary": false
+  },
+  {
+   "id": "owner",
+   "label": "Owner Ctl",
+   "icon": "◉",
+   "url": "http://127.0.0.1:18082/",
+   "category": "Control & Gate",
+   "primary": false
+  },
+  {
+   "id": "approval2",
+   "label": "LouBot Pad",
+   "icon": "🤖",
+   "url": "http://127.0.0.1:18097/",
+   "category": "Control & Gate",
+   "primary": false
+  },
+  {
+   "id": "directory",
+   "label": "Directory",
+   "icon": "☰",
+   "category": "Business & Control",
+   "url": "http://127.0.0.1:11882/"
+  },
+  {
+   "id": "honeycomb",
+   "label": "Honeycomb",
+   "icon": "⬡",
+   "url": "http://127.0.0.1:1185/",
+   "category": "Business & Control",
+   "primary": false
+  },
+  {
+   "id": "proposals",
+   "label": "Proposals",
+   "icon": "✎",
+   "url": "http://127.0.0.1:11902/",
+   "category": "Business & Control",
+   "primary": false
+  },
+  {
+   "id": "brainhub",
+   "label": "Brain Hub",
+   "icon": "◎",
+   "url": "http://127.0.0.1:6205/",
+   "category": "Business & Control",
+   "primary": false
+  },
+  {
+   "id": "social_0",
+   "label": "TikTok",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_1",
+   "label": "YouTube / Shorts",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_2",
+   "label": "Instagram / Reels",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_3",
+   "label": "Facebook Pages",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_4",
+   "label": "Threads",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_5",
+   "label": "LinkedIn",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_6",
+   "label": "X",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "social_7",
+   "label": "Pinterest",
+   "icon": "◌",
+   "category": "Social & Channels",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_0",
+   "label": "Executive / COO",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_1",
+   "label": "Product & Pricing",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_2",
+   "label": "Sales",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_3",
+   "label": "Distribution",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_4",
+   "label": "Marketing / Social",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_5",
+   "label": "Customer Care",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_6",
+   "label": "Legal / Compliance",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_7",
+   "label": "Finance",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_8",
+   "label": "Production Factory",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_9",
+   "label": "Logistics",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_10",
+   "label": "Analytics",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_11",
+   "label": "Agent HR",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_12",
+   "label": "Engineering",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_13",
+   "label": "SRE / Reliability",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_14",
+   "label": "Security & Trust",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_15",
+   "label": "Privacy / Data",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_16",
+   "label": "Connector Eng.",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_17",
+   "label": "AI Model Ops",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_18",
+   "label": "Research",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_19",
+   "label": "Backup / DR",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  },
+  {
+   "id": "loucorp_20",
+   "label": "Simulation",
+   "icon": "◇",
+   "category": "LOUCORP (Future)",
+   "status": "PLANNED"
+  }
+ ],
+ "health": [
+  {
+   "port": 1182,
+   "role": "Front door",
+   "url": "http://127.0.0.1:1182/api/status"
+  },
+  {
+   "port": 11880,
+   "role": "BlueBot",
+   "url": "http://127.0.0.1:11880/api/status"
+  },
+  {
+   "port": 11882,
+   "role": "Directory",
+   "url": "http://127.0.0.1:11882/"
+  },
+  {
+   "port": 11770,
+   "role": "Owner Gate",
+   "url": "http://127.0.0.1:11770/loukey/status"
+  },
+  {
+   "port": 11883,
+   "role": "Readback",
+   "url": "http://127.0.0.1:1182/api/owner-termux-r8r3/health"
+  },
+  {
+   "port": 18082,
+   "role": "Owner Ctl",
+   "url": "http://127.0.0.1:18082/"
+  },
+  {
+   "port": 18097,
+   "role": "LouBot Pad",
+   "url": "http://127.0.0.1:18097/"
+  },
+  {
+   "port": 1185,
+   "role": "Honeycomb",
+   "url": "http://127.0.0.1:1185/"
+  },
+  {
+   "port": 11902,
+   "role": "Proposals",
+   "url": "http://127.0.0.1:11902/"
+  },
+  {
+   "port": 6205,
+   "role": "Brain Hub",
+   "url": "http://127.0.0.1:6205/health"
+  },
+  {
+   "port": 11437,
+   "role": "Qwen",
+   "url": "http://127.0.0.1:11437/v1/models"
+  },
+  {
+   "port": 11438,
+   "role": "llama",
+   "url": "http://127.0.0.1:11438/v1/models"
+  }
+ ],
+ "chat": {
+  "url": "http://127.0.0.1:11880/api/chat",
+  "message_key": "message",
+  "_verify": "Confirm message_key with the discovery block in README",
+  "image_key": "",
+  "_image_note": "Leave empty until the census shows which field 11880 accepts for images. Empty = screenshots are previewed locally but not sent."
+ },
+ "bots": [
+  {
+   "id": "bluebot",
+   "label": "BlueBot",
+   "icon": "♣",
+   "prefix": "",
+   "desc": "Manager. Routes to the right department.",
+   "color": "#3b82f6"
+  },
+  {
+   "id": "grok",
+   "label": "Grok",
+   "icon": "✶",
+   "prefix": "@grok ",
+   "desc": "Grok lane on 11880 (external network: owner decision WO-00).",
+   "color": "#f97316"
+  },
+  {
+   "id": "grok_image",
+   "label": "Grok Image",
+   "icon": "◐",
+   "prefix": "@grok-image ",
+   "desc": "Image generation lane on 11880.",
+   "color": "#ec4899"
+  },
+  {
+   "id": "brain",
+   "label": "Brain",
+   "icon": "🧠",
+   "prefix": "Brain (Brain Challenger, suggest-only): challenge and improve this - ",
+   "color": "#a855f7",
+   "desc": "Brain department via BlueBot. Suggest-only."
+  },
+  {
+   "id": "engineering",
+   "label": "Engineering",
+   "icon": "⚙",
+   "prefix": "Engineering department: ",
+   "color": "#14b8a6",
+   "desc": "Engineering department via BlueBot."
+  },
+  {
+   "id": "loucode",
+   "label": "LouCode",
+   "icon": "⌘",
+   "prefix": "@loucode ",
+   "color": "#22c55e",
+   "desc": "LouCode via BlueBot (@loucode → local Qwen coder 3B adapter). Needs 11437 up."
+  },
+  {
+   "id": "lougrok",
+   "label": "LouGrok",
+   "icon": "✷",
+   "prefix": "@lougrok ",
+   "color": "#f59e0b",
+   "desc": "@lougrok lane in BlueBot (local adapter). Needs 11437 up."
+  },
+  {
+   "id": "claude",
+   "label": "Claude",
+   "icon": "✳",
+   "prefix": "",
+   "brain": "claude",
+   "color": "#d97757",
+   "desc": "Straight to Claude (needs ANTHROPIC_API_KEY). Falls back if it fails."
+  },
+  {
+   "id": "qwen_local",
+   "label": "Qwen (local)",
+   "icon": "⌂",
+   "prefix": "",
+   "brain": "qwen",
+   "color": "#64748b",
+   "desc": "Straight to the local model 11437."
+  }
+ ],
+ "_bots_note": "Each bot is a prefix on the same 11880 chat route. Only @grok and @grok-image are proven in the 11880 log; add codefix agents / trainees here after the census confirms their names. Each bot can set its own color (hex) and icon; message boxes use them.",
+ "termux": {
+  "readback_url": "",
+  "screen_key": "screen_plain",
+  "history_key": "history_plain",
+  "_note": "Set readback_url to the 11883 snapshot GET route from the census (WO-01). Supervised keyboard (11884) is not wired: owner-manual only."
+ },
+ "brains": {
+  "_note": "BlueBot answers first. If it times out or fails, the next brain in 'order' answers. Remote brains need a key (and model) in ~/.lousta/keys.env. Set fallback=false to turn this off.",
+  "fallback": true,
+  "order": [
+   "bluebot",
+   "qwen",
+   "llama",
+   "grok",
+   "claude",
+   "openai",
+   "gemini",
+   "openrouter",
+   "groq"
+  ],
+  "list": {
+   "bluebot": {
+    "label": "BlueBot",
+    "type": "bluebot",
+    "timeout": 45
+   },
+   "qwen": {
+    "label": "Qwen (local)",
+    "type": "openai",
+    "local": true,
+    "base": "http://127.0.0.1:11437/v1",
+    "timeout": 120
+   },
+   "llama": {
+    "label": "llama (local)",
+    "type": "openai",
+    "local": true,
+    "base": "http://127.0.0.1:11438/v1",
+    "timeout": 120
+   },
+   "grok": {
+    "label": "Grok",
+    "type": "openai",
+    "base": "https://api.x.ai/v1",
+    "key_env": "XAI_API_KEY",
+    "model_env": "XAI_MODEL",
+    "timeout": 90
+   },
+   "claude": {
+    "label": "Claude",
+    "type": "anthropic",
+    "key_env": "ANTHROPIC_API_KEY",
+    "model_env": "ANTHROPIC_MODEL",
+    "model": "claude-opus-5-5",
+    "timeout": 120
+   },
+   "openai": {
+    "label": "OpenAI",
+    "type": "openai",
+    "base": "https://api.openai.com/v1",
+    "key_env": "OPENAI_API_KEY",
+    "model_env": "OPENAI_MODEL",
+    "timeout": 90
+   },
+   "gemini": {
+    "label": "Gemini",
+    "type": "openai",
+    "base": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "key_env": "GEMINI_API_KEY",
+    "model_env": "GEMINI_MODEL",
+    "timeout": 90
+   },
+   "openrouter": {
+    "label": "OpenRouter",
+    "type": "openai",
+    "base": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY",
+    "model_env": "OPENROUTER_MODEL",
+    "timeout": 90
+   },
+   "groq": {
+    "label": "Groq",
+    "type": "openai",
+    "base": "https://api.groq.com/openai/v1",
+    "key_env": "GROQ_API_KEY",
+    "model_env": "GROQ_MODEL",
+    "timeout": 60
+   }
+  }
+ },
+ "extra_pages": [
+  "http://127.0.0.1:1182/bluebot-engineering-termux/portal/index.html"
+ ],
+ "_extra_pages_note": "Pages that live below a port's root. Connect reads their menus too and adds their features as tiles.",
+ "voice": {
+  "_note": "Speech-to-text for browsers without built-in speech recognition (e.g. Edge on Android). Order: local whisper.cpp first, then Groq/OpenAI if a key is set in ~/.lousta/keys.env. lang: '' = auto, or e.g. 'en'.",
+  "order": [
+   "local",
+   "groq",
+   "openai"
+  ],
+  "lang": "",
+  "local": {
+   "ffmpeg": "ffmpeg",
+   "whisper": "whisper-cli",
+   "model": "~/.lousta/whisper/ggml-base.bin"
+  }
+ },
+ "truth": {
+  "_note": "Termux is the source of truth. The hub reads it (never changes it) every ~10 s: services, tmux, processes, BlueBot status, autopilot/BR37N2, LouKey inbox, lock, memory, and canonical file hashes from truth_manifest.json. Backup brains always get these facts. Set to_bluebot=true to also append them to messages sent to BlueBot.",
+  "to_bluebot": false
+ }
+}

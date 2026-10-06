@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07080d">
+<title>Lousta</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%279%27 fill=%27%238b5cf6%27/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#07080d;--bg2:#0d0f17;--card:rgba(255,255,255,.045);--card2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
+  --text:#f2f3f8;--dim:#8d93a8;--faint:#5b6075;
+  --a1:#8b5cf6;--a2:#3b82f6;--a3:#22d3ee;--grad:linear-gradient(135deg,#8b5cf6 0%,#3b82f6 55%,#22d3ee 100%);
+  --up:#34d399;--warn:#fbbf24;--down:#f87171;
+  --r:20px;--r2:14px;--shadow:0 10px 40px rgba(0,0,0,.45);
+  --nav:76px;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f5f6fb;--bg2:#ffffff;--card:rgba(15,20,40,.04);--card2:rgba(15,20,40,.07);
+  --line:rgba(15,20,40,.08);--line2:rgba(15,20,40,.14);--text:#0f1222;--dim:#5d6378;--faint:#9aa0b4;
+  --shadow:0 10px 40px rgba(20,30,60,.12)}}
+:root[data-theme="light"]{
+  --bg:#f5f6fb;--bg2:#ffffff;--card:rgba(15,20,40,.04);--card2:rgba(15,20,40,.07);
+  --line:rgba(15,20,40,.08);--line2:rgba(15,20,40,.14);--text:#0f1222;--dim:#5d6378;--faint:#9aa0b4;
+  --shadow:0 10px 40px rgba(20,30,60,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:15px/1.45 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{overflow:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--a2);outline-offset:3px;border-radius:10px}
+.glow{position:fixed;inset:-20% -20% auto;height:60vh;pointer-events:none;z-index:0;
+  background:radial-gradient(40% 50% at 20% 20%,rgba(139,92,246,.22),transparent 70%),
+             radial-gradient(35% 45% at 85% 10%,rgba(34,211,238,.14),transparent 70%)}
+
+/* ---------- top bar ---------- */
+.top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{width:34px;height:34px;border-radius:11px;background:var(--grad);display:grid;place-items:center;
+  box-shadow:0 6px 20px rgba(99,102,241,.45);flex:0 0 auto}
+.mark svg{width:18px;height:18px}
+.brand b{font-size:17px;letter-spacing:-.01em}
+.brand small{display:block;font-size:11.5px;color:var(--dim);margin-top:-2px}
+.grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--text);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+.dot.UP{background:var(--up);box-shadow:0 0 0 3px color-mix(in srgb,var(--up) 22%,transparent)}
+.dot.ERROR{background:var(--warn)}.dot.DOWN,.dot.REFUSED_NON_LOCAL{background:var(--down)}
+.dot.PLANNED{background:transparent;border:1.5px dashed var(--faint)}
+.iconbtn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:var(--text)}
+.iconbtn svg{width:18px;height:18px}
+
+/* ---------- views ---------- */
+.view{position:fixed;inset:0;overflow:auto;z-index:1;
+  padding:calc(70px + env(safe-area-inset-top)) 16px calc(var(--nav) + 28px + env(safe-area-inset-bottom));
+  opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+.view.on{opacity:1;transform:none;pointer-events:auto}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:28px;line-height:1.15;letter-spacing:-.025em;margin:14px 0 6px}
+h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);margin:0 0 18px}
+.sec{display:flex;align-items:baseline;justify-content:space-between;margin:26px 2px 10px}
+.sec h2{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0}
+.sec span{font-size:12px;color:var(--faint)}
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;position:relative;overflow:hidden;color:var(--text)}
+.stat{display:grid;gap:6px;min-height:92px;text-align:left;align-content:start}
+.stat .k{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px}
+.stat .v{font-size:20px;font-weight:650;letter-spacing:-.02em}
+.stat .m{font-size:11.5px;color:var(--faint);font-family:ui-monospace,SFMono-Regular,monospace}
+.hero{grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(59,130,246,.10) 60%,rgba(34,211,238,.08));border-color:var(--line2)}
+.hero .v{font-size:26px}
+.bar{height:6px;border-radius:99px;background:var(--card2);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--grad);border-radius:99px;transition:width .4s}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.tile{display:grid;gap:8px;justify-items:start;align-content:start;text-align:left;padding:14px;border-radius:var(--r2);
+  background:var(--card);border:1px solid var(--line);min-height:96px;position:relative;transition:transform .12s,background .2s}
+.tile:active{transform:scale(.97)}
+.tile:hover{background:var(--card2)}
+.tile .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:var(--card2)}
+.tile .t{font-size:13.5px;font-weight:550;line-height:1.2}
+.tile .dot{position:absolute;top:12px;right:12px}
+.tile.planned{border-style:dashed;opacity:.7}
+.tile .tag{font-size:9.5px;letter-spacing:.06em;color:var(--warn);font-weight:600}
+.search{display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.search input{flex:1;background:none;border:0;outline:0;min-width:0}
+.search svg{width:17px;height:17px;color:var(--dim)}
+
+/* ---------- chat ---------- */
+#chatView{padding-bottom:calc(var(--nav) + 104px + env(safe-area-inset-bottom))}
+.msgs{display:flex;flex-direction:column;gap:12px}
+.msg{max-width:86%;padding:11px 14px;border-radius:18px;white-space:pre-wrap;word-wrap:break-word;animation:pop .2s ease}
+.msg.me{align-self:flex-end;background:var(--grad);color:#fff;border-bottom-right-radius:6px}
+.msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg.err{border-color:color-mix(in srgb,var(--down) 50%,transparent)}
+.msg .who{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.msg.me .who{color:rgba(255,255,255,.75)}
+.msg .meta{display:block;margin-top:6px;font:11px ui-monospace,monospace;color:var(--faint)}
+.msg pre{white-space:pre-wrap;margin:6px 0 0;font:12px/1.4 ui-monospace,monospace;color:var(--dim)}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.typing{display:inline-flex;gap:4px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--dim);animation:b 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.empty{display:grid;gap:14px;margin-top:6vh}
+.sugg{display:flex;flex-wrap:wrap;gap:8px}
+.sugg button{padding:9px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13.5px}
+.composer{position:fixed;left:12px;right:12px;bottom:calc(var(--nav) + 18px + env(safe-area-inset-bottom));z-index:15;
+  max-width:760px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 16px;border-radius:24px;
+  background:color-mix(in srgb,var(--bg2) 86%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--line2);box-shadow:var(--shadow)}
+.composer textarea{flex:1;background:none;border:0;outline:0;resize:none;max-height:140px;padding:9px 0;line-height:1.4}
+.send{width:42px;height:42px;border-radius:16px;background:var(--grad);display:grid;place-items:center;color:#fff;flex:0 0 auto}
+.send:disabled{opacity:.4}
+.send svg{width:18px;height:18px}
+
+/* ---------- page viewer ---------- */
+.viewer{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateY(100%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s}
+.viewer.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.vbar{display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.vbar .ttl{flex:1;min-width:0}
+.vbar .ttl b{display:block;font-size:15px}
+.vbar .ttl span{display:block;font:11px ui-monospace,monospace;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frames{position:relative;flex:1;background:var(--bg)}
+.frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#fff}
+.frames iframe.on{display:block}
+.vmsg{position:absolute;inset:0;display:grid;place-content:center;gap:12px;padding:28px;text-align:center;background:var(--bg)}
+.vmsg h3{margin:0;font-size:19px}.vmsg p{margin:0 auto;color:var(--dim);max-width:420px}
+.btn{height:44px;padding:0 18px;border-radius:14px;background:var(--card2);border:1px solid var(--line2);font-weight:550}
+.btn.pri{background:var(--grad);border:0;color:#fff}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:30;
+  max-width:520px;margin:0 auto;height:64px;display:grid;grid-template-columns:repeat(5,1fr);padding:6px;border-radius:24px;
+  background:color-mix(in srgb,var(--bg2) 80%,transparent);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);
+  border:1px solid var(--line2);box-shadow:var(--shadow)}
+.nav button{display:grid;place-items:center;align-content:center;gap:3px;border-radius:18px;font-size:11px;color:var(--dim);transition:background .2s,color .2s}
+.nav button svg{width:21px;height:21px}
+.nav button[aria-current="page"]{color:var(--text);background:var(--card2)}
+.nav button[aria-current="page"] svg{color:var(--a1)}
+body.viewing .nav{display:none}
+
+/* ---------- sheet ---------- */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;max-height:82dvh;overflow:auto;max-width:620px;margin:0 auto;
+  background:var(--bg2);border:1px solid var(--line2);border-bottom:0;border-radius:26px 26px 0 0;
+  padding:10px 18px calc(22px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;
+  transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s .26s}
+.sheet.on{transform:none;visibility:visible;transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line2);margin:4px auto 14px}
+.svc{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
+.svc b{font-size:14px}.svc small{display:block;color:var(--faint);font:11px ui-monospace,monospace}
+.svc code{font:12px ui-monospace,monospace;color:var(--dim)}
+.locks{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.locks span{font:10.5px ui-monospace,monospace;padding:5px 8px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--dim)}
+
+/* chat v2 */
+#chatView{padding-bottom:calc(var(--nav) + 150px + env(safe-area-inset-bottom))}
+.composer{flex-direction:column;align-items:stretch;padding:8px 8px 8px 14px;gap:4px}
+.composer .row{display:flex;align-items:center;gap:4px}
+.composer .row .grow{flex:1}
+.tool{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--dim)}
+.tool svg{width:19px;height:19px}.tool[aria-pressed="true"]{color:var(--text);background:var(--card2)}
+.tool.rec{color:#fff;background:var(--down);animation:b 1.2s infinite}
+.botchip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:999px;background:var(--card2);font-size:13px;font-weight:600}
+.botchip{white-space:nowrap;max-width:38vw;min-width:0;flex:0 1 auto}.botchip #botName{overflow:hidden;text-overflow:ellipsis}
+.attach{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+.attach .a{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 4px;border:1px solid var(--line);border-radius:12px;font-size:12px;color:var(--dim)}
+.attach img{width:44px;height:44px;object-fit:cover;border-radius:8px}
+.send.stop{background:var(--card2);color:var(--text)}
+.msg.bot{max-width:94%}
+.md p{margin:0 0 8px}.md p:last-child{margin:0}.md ul,.md ol{margin:4px 0 8px;padding-left:20px}
+.md h3,.md h4{margin:10px 0 6px;font-size:15px}
+.md code{font:12.5px ui-monospace,monospace;background:var(--card2);padding:1px 5px;border-radius:6px}
+.md .code{margin:8px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg)}
+.md .code .bar2{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 4px 10px;font:11px ui-monospace,monospace;color:var(--faint);border-bottom:1px solid var(--line)}
+.md .code pre{margin:0;padding:10px;overflow:auto;font:12.5px/1.5 ui-monospace,monospace;color:var(--text);white-space:pre}
+.md a{color:var(--a3)}
+.mini{height:28px;padding:0 9px;border-radius:9px;font-size:12px;color:var(--dim);border:1px solid var(--line);background:var(--card)}
+.msgacts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.msg.me .shot{display:block;max-width:220px;border-radius:10px;margin-top:6px}
+.list{display:grid;gap:6px}
+.li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;text-align:left;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.li[aria-current="true"]{border-color:var(--a1)}
+.li small{display:block;color:var(--faint);font-size:12px}
+.pal{position:fixed;left:50%;top:12vh;transform:translateX(-50%);width:min(560px,92vw);z-index:60;background:var(--bg2);border:1px solid var(--line2);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.pal input{width:100%;height:52px;border:0;outline:0;background:none;padding:0 16px;font-size:16px;border-bottom:1px solid var(--line)}
+.pal .opts{max-height:50vh;overflow:auto;padding:6px}
+.pal .o{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px;border-radius:10px}
+.pal .o[aria-selected="true"]{background:var(--card2)}
+.pal .o small{margin-left:auto;color:var(--faint);font-size:11px}
+.term{font:12px/1.4 ui-monospace,monospace;white-space:pre;overflow:auto;max-height:46vh;background:#05060a;color:#cfe3d2;border-radius:12px;padding:10px;border:1px solid var(--line)}
+.runlog{display:grid;gap:6px;font-size:13px}
+.runlog .r{display:flex;gap:8px;align-items:center}
+.chk{display:flex;gap:10px;align-items:center;padding:8px 0;font-size:14px}
+.chk input{width:20px;height:20px;accent-color:var(--a1)}
+.talkbar{position:fixed;left:12px;right:12px;max-width:760px;margin:0 auto;z-index:16;bottom:calc(var(--nav) + 150px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:16px;background:var(--grad);color:#fff;font-weight:600;box-shadow:var(--shadow)}
+.talkbar .mini{margin-left:auto;background:rgba(255,255,255,.2);border:0;color:#fff}
+.pulse{width:10px;height:10px;border-radius:50%;background:#fff;animation:b 1s infinite}
+#talkBtn[aria-pressed="true"]{color:#fff;background:var(--grad)}
+.cont{justify-content:center}
+.msg.bot{--bc:var(--a2);background:color-mix(in srgb,var(--bc) 9%,var(--card));border-color:color-mix(in srgb,var(--bc) 35%,transparent);border-left:3px solid var(--bc)}
+.msg.bot .who{display:flex;align-items:center;gap:8px;color:var(--bc)}
+.msg.bot .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:#fff;background:var(--bc);box-shadow:0 0 0 3px color-mix(in srgb,var(--bc) 25%,transparent);letter-spacing:0}
+.msg.bot.err{--bc:var(--down)}
+.li .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--bc,var(--card2))}
+.cg{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.cg textarea{width:100%;min-height:84px;resize:vertical;border-radius:14px;border:1px solid var(--line2);background:var(--card);padding:12px;outline:0;line-height:1.4}
+.cg textarea.mono{font:12.5px/1.45 ui-monospace,monospace;min-height:120px}
+.cg .rowx{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cg select{height:40px;border-radius:12px;border:1px solid var(--line2);background:var(--card);color:var(--text);padding:0 10px}
+.script pre{margin:0;max-height:52vh;overflow:auto;padding:12px;font:12.5px/1.5 ui-monospace,monospace;white-space:pre;background:#05060a;color:#e6edf3;border-radius:0 0 14px 14px}
+.script{border:1px solid var(--line2);border-radius:16px;overflow:hidden;background:var(--card)}
+.script .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line)}
+.risk{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:4px 8px;border-radius:999px}
+.risk.READ_ONLY{background:color-mix(in srgb,var(--up) 25%,transparent)}.risk.MUTATES{background:color-mix(in srgb,var(--warn) 30%,transparent)}.risk.DANGER{background:color-mix(in srgb,var(--down) 35%,transparent)}
+.warns{display:grid;gap:4px;font-size:12.5px;color:var(--dim);padding:8px 12px;border-bottom:1px solid var(--line)}
+.warns .w{color:var(--warn)}.warns .x{color:var(--down)}
+.diag{font-size:13.5px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.rounds{display:flex;gap:6px;flex-wrap:wrap}
+.rounds button{height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--card);font-size:12px}
+.rounds button[aria-current="true"]{border-color:var(--a1);color:var(--text)}
+.errc{font-size:12px;color:var(--dim)}.errc b{color:var(--down)}
+/* native modules + build queue */
+.native{position:absolute;inset:0;overflow:auto;padding:16px 16px 40px;background:var(--bg);display:none}
+.native.on{display:block}
+.wo{display:grid;gap:8px;text-align:left}
+.wo .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wo .id{font:12px ui-monospace,monospace;color:var(--faint)}
+.wo .t{font-size:16px;font-weight:620;letter-spacing:-.01em}
+.wo p{margin:0;color:var(--dim);font-size:13.5px}
+.pill{font-size:10.5px;font-weight:650;letter-spacing:.06em;padding:4px 8px;border-radius:999px;background:var(--card2);color:var(--dim)}
+.pill.READY{background:color-mix(in srgb,var(--a2) 22%,transparent);color:var(--text)}
+.pill.IN_PROGRESS{background:color-mix(in srgb,var(--warn) 25%,transparent);color:var(--text)}
+.pill.REVIEW{background:color-mix(in srgb,var(--a1) 28%,transparent);color:var(--text)}
+.pill.DONE{background:color-mix(in srgb,var(--up) 25%,transparent);color:var(--text)}
+.pill.OWNER{background:color-mix(in srgb,var(--down) 22%,transparent);color:var(--text)}
+.wo .acts{display:flex;gap:8px;margin-top:4px}
+.wo details{font-size:13px;color:var(--dim)}.wo summary{cursor:pointer;color:var(--text)}
+.wo pre{white-space:pre-wrap;font:12px/1.45 ui-monospace,monospace;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0 0}
+.stack{display:grid;gap:10px}
+.prog{display:flex;gap:10px;align-items:center;color:var(--dim);font-size:13px}
+@media (min-width:900px){
+  .bento{grid-template-columns:repeat(4,1fr)}
+  .hero{grid-column:span 2}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="brand">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2.5a4.2 4.2 0 0 0-3.9 5.8A4.2 4.2 0 1 0 9.7 16.4L9 21.5h6l-.7-5.1a4.2 4.2 0 1 0 1.6-8.1A4.2 4.2 0 0 0 12 2.5z"/></svg></div>
+    <div><b>Lousta</b><small id="viewName">Chat</small></div>
+  </div>
+  <div class="grow"></div>
+  <button class="chip" id="statusBtn" aria-haspopup="dialog" aria-label="System status"><span class="dot" id="sDot"></span><span id="sText">…</span></button>
+  <button class="iconbtn" id="themeBtn" aria-label="Switch light or dark theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+</header>
+
+<main class="view on" id="chatView" aria-label="Chat">
+  <div class="wrap">
+    <div class="empty" id="empty">
+      <h1>Hey Louie.<br><span class="g">What are we building?</span></h1>
+      <p class="sub">Talk to BlueBot. The team plans and drafts; anything live still goes through your Gate.</p>
+      <div class="sugg">
+        <button type="button">Status of every service</button>
+        <button type="button">What is the next build step?</button>
+        <button type="button">Ask Engineering to review the hub</button>
+        <button type="button">Summarise today’s traces</button>
+      </div>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+  </div>
+</main>
+<div class="talkbar" id="talkBar" hidden role="status" aria-live="polite"><span class="pulse"></span><span id="talkState">Listening…</span><button type="button" class="mini" id="talkStop">End talk</button></div>
+<form class="composer" id="composer" autocomplete="off">
+  <div class="attach" id="attach" hidden></div>
+  <textarea id="input" rows="1" placeholder="Message BlueBot…" aria-label="Message"></textarea>
+  <div class="row">
+    <button type="button" class="botchip" id="botBtn" aria-haspopup="dialog" aria-label="Choose chatbot"><span id="botIc">♣</span><span id="botName">BlueBot</span> ▾</button>
+    <button type="button" class="tool" id="micBtn" aria-label="Dictate (voice to text)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    <button type="button" class="tool" id="talkBtn" aria-label="Talk mode: hands-free voice conversation" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></button>
+    <button type="button" class="tool" id="shotBtn" aria-label="Share screen snapshot or screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
+    <button type="button" class="tool" id="termBtn" aria-label="Live Termux"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 17l6-5-6-5M12 19h8"/></svg></button>
+    <button type="button" class="tool" id="chatsBtn" aria-label="Conversations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+    <span class="grow"></span>
+    <button class="send" id="sendBtn" type="submit" aria-label="Send" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </div>
+  <input type="file" id="fileIn" accept="image/*" hidden>
+</form>
+
+<div class="scrim" id="palScrim" hidden></div>
+<div class="pal" id="pal" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+  <input id="palIn" placeholder="Jump to a page, bot or action…" aria-label="Command" role="combobox" aria-controls="palOpts" aria-expanded="true">
+  <div class="opts" id="palOpts" role="listbox"></div>
+</div>
+
+<main class="view" id="moreView" aria-label="Everything">
+  <div class="wrap">
+    <h1>Everything</h1>
+    <p class="sub">Every BlueBot space in one place.</p>
+    <div class="bento" id="bento"></div>
+    <div class="sec"><h2>Find</h2></div>
+    <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search pages and spaces" aria-label="Search pages"></label>
+    <div id="cats"></div>
+  </div>
+</main>
+
+<main class="view" id="codeView" aria-label="Code">
+  <div class="wrap cg">
+    <h1>Code <span class="g">for Termux</span></h1>
+    <p class="sub" style="margin:0">Describe it → a coding bot writes the script → you run it in Termux → paste or pull the output → the fixer agent corrects it and writes the next input.</p>
+    <textarea id="cgTask" placeholder="What should the script do? e.g. Check which BlueBot services are down and show their last log lines" aria-label="Task"></textarea>
+    <div class="rowx">
+      <select id="cgBot" aria-label="Coding bot"></select>
+      <label class="chk" style="padding:0"><input type="checkbox" id="cgRO" checked> Read-only</label>
+      <span class="grow" style="flex:1"></span>
+      <button class="btn pri" id="cgGen">Write script</button>
+    </div>
+    <div class="rounds" id="cgRounds"></div>
+    <div id="cgOut"></div>
+    <div class="card" id="cgRun" hidden>
+      <div class="sec" style="margin:0 0 8px"><h2>Termux output</h2><span class="errc" id="cgErrc"></span></div>
+      <textarea class="mono" id="cgOutput" placeholder="Run the script in Termux, then paste what it printed here (or Pull from Termux)." aria-label="Termux output"></textarea>
+      <div class="rowx" style="margin-top:8px">
+        <button class="btn" id="cgPull">Pull from Termux</button>
+        <label class="chk" style="padding:0"><input type="checkbox" id="cgAuto"> Auto-fix when output arrives</label>
+        <span class="grow" style="flex:1"></span>
+        <button class="btn pri" id="cgFix">Fix &amp; next input</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<main class="view" id="buildView" aria-label="Build">
+  <div class="wrap">
+    <h1>Build</h1>
+    <p class="sub">The team’s work orders for finishing this app. Hand one to BlueBot; you review and promote the result.</p>
+    <div class="card prog" id="buildProg"></div>
+    <div class="card" style="margin-top:12px">
+      <div class="sec" style="margin:0 0 8px"><h2>Auto-build run</h2><span id="runState">idle</span></div>
+      <p class="sub" style="margin:0 0 6px;font-size:13.5px">Pick READY work orders and a bot. They are sent one at a time while you watch. Replies are drafts only. Nothing goes live without PROMOTE.</p>
+      <div id="runPick"></div>
+      <div class="msgacts"><button class="btn pri" id="buildRest">▶ Build the rest</button><button class="btn" id="runStart">Run ticked</button><button class="btn" id="runStop" disabled>Stop</button></div>
+      <div class="runlog" id="runLog" style="margin-top:10px"></div>
+    </div>
+    <div class="sec"><h2>Work orders</h2><span id="woCount"></span></div>
+    <div class="stack" id="woList"></div>
+  </div>
+</main>
+
+<section class="viewer" id="viewer" aria-label="Page viewer" aria-hidden="true">
+  <div class="vbar">
+    <button class="iconbtn" id="vBack" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <div class="ttl"><b id="vTitle">Page</b><span id="vUrl"></span></div>
+    <button class="iconbtn" id="vReload" aria-label="Reload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></button>
+    <a class="iconbtn" id="vOpen" target="_blank" rel="noopener" aria-label="Open in browser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+  </div>
+  <div class="frames" id="frames">
+    <div class="vmsg" id="vMsg" hidden><h3 id="vMsgT"></h3><p id="vMsgP"></p><div><button class="btn pri" id="vForce" hidden>Load anyway</button></div></div>
+  </div>
+</section>
+
+<nav class="nav" id="nav" aria-label="Main"></nav>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="botSheet" role="dialog" aria-modal="true" aria-labelledby="botTitle" aria-hidden="true">
+  <div class="grab"></div><div class="sec" style="margin-top:0"><h2 id="botTitle">Chatbots</h2><span>one chat, many bots</span></div>
+  <div class="list" id="botList"></div>
+</section>
+<section class="sheet" id="chatsSheet" role="dialog" aria-modal="true" aria-labelledby="chatsTitle" aria-hidden="true">
+  <div class="grab"></div><div class="sec" style="margin-top:0"><h2 id="chatsTitle">Conversations</h2><button class="chip" id="newChat">+ New chat</button></div>
+  <div class="list" id="convList"></div>
+</section>
+<section class="sheet" id="termSheet" role="dialog" aria-modal="true" aria-labelledby="termTitle" aria-hidden="true">
+  <div class="grab"></div><div class="sec" style="margin-top:0"><h2 id="termTitle">Live Termux</h2><span id="termWhen"></span></div>
+  <div id="termBody"></div>
+  <div class="msgacts"><button class="btn" id="termExplain">Explain this</button><button class="btn" id="termHist" aria-pressed="false">History</button></div>
+  <p class="sub" style="margin-top:12px;font-size:12.5px">Read-only view of pane %0 (11883). Typing into Termux stays owner-manual (11884). Supervised keyboard is planned. See README.</p>
+</section>
+<section class="sheet" id="statusSheet" role="dialog" aria-modal="true" aria-labelledby="stTitle" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="sec" style="margin-top:0"><h2 id="stTitle">System · Truth</h2><span><button class="chip" id="truthCopy">Copy truth report</button> <button class="chip" id="stRefresh">Refresh</button></span></div>
+  <p class="sub" style="font-size:12.5px;margin:0 0 6px" id="truthWhen">Termux is the source of truth. Read from the phone, never changed.</p>
+  <div id="truthChecks"></div>
+  <details id="truthMore" style="margin:8px 0"><summary class="sub" style="cursor:pointer">Canonical files, processes, autopilot</summary><div id="truthDetail"></div></details>
+  <div class="sec"><h2>Services</h2></div>
+  <div id="svcList"></div>
+  <div class="sec"><h2>Voice</h2><button class="chip" id="voiceCheckBtn">Voice check</button></div>
+  <div id="voiceList"></div>
+  <div class="sec"><h2>Brains</h2><span id="brainNote"></span></div>
+  <div id="brainList"></div>
+  <div class="locks"><span>PRODUCTION=LOCKED</span><span>SELF_APPROVAL=NO</span><span>MAX_EXECUTING=1</span><span>BRAIN=SUGGEST_ONLY</span><span>HUB=VIEW+CHAT_ONLY</span><span>BRAINS=CHAT_ONLY_NO_TOOLS</span><span>TERMUX_INPUT=OWNER_MANUAL</span></div>
+</section>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ICON={
+ chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+ code:'<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>',
+ work:'<path d="M4 17l6-5-6-5M12 19h8"/>',
+ build:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+ more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'};
+const svg=n=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[n]+'</svg>';
+
+let cfg={modules:[]},health={},tab='chat',opener=null;
+const frames=new Map();
+const store=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const recall=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const planned=m=>m.status==='PLANNED'||(!m.url&&!m.native);
+const portOf=u=>{try{const x=new URL(u);return +(x.port||80)}catch(e){return null}};
+const isLocal=u=>{try{const x=new URL(u);return x.protocol==='http:'&&['127.0.0.1','localhost'].includes(x.hostname)}catch(e){return false}};
+const stateOf=m=>planned(m)?'PLANNED':((health[portOf(m.url)]||{}).state||'UNKNOWN');
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+const txt=(t,c,s)=>{const e=el(t,c);e.textContent=s;return e};
+
+/* theme */
+const savedTheme=recall('lousta.theme');if(savedTheme)document.documentElement.dataset.theme=savedTheme;
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  const nx=cur==='light'?'dark':'light';document.documentElement.dataset.theme=nx;store('lousta.theme',nx)};
+
+/* nav: Chat | Code | Work | Build | More */
+const NAV=[['chat','Chat'],['code','Code'],['work','Work','workbench'],['build','Build'],['more','More']];
+NAV.forEach(([id,label,mod])=>{
+  const b=el('button','',svg(id)+'<span></span>');b.lastChild.textContent=label;b.dataset.tab=id;
+  b.onclick=()=>mod?openPage(mod,b):go(id);$('#nav').appendChild(b)});
+function go(id){
+  closeViewer(true);tab=id;
+  $$('.view').forEach(v=>v.classList.toggle('on',v.id===id+'View'));
+  $('#composer').hidden=id!=='chat';
+  $('#viewName').textContent={chat:'Chat',more:'Everything',build:'Build',code:'Code'}[id]||'';
+  if(id==='code')cgInit();
+  if(id==='build')renderBuild();
+  markNav(id);
+}
+function markNav(id){$$('#nav button').forEach(b=>b.dataset.tab===id?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'))}
+
+/* ---------- More view ---------- */
+function renderMore(){
+  const c=$('#cats');c.textContent='';
+  const cats=[];cfg.modules.forEach(m=>{const k=m.category||'Other';if(!cats.includes(k))cats.push(k)});
+  cats.forEach(k=>{
+    const list=cfg.modules.filter(m=>(m.category||'Other')===k);
+    const live=list.filter(m=>!planned(m)).length;
+    const sec=el('div','sec');sec.dataset.cat=k;sec.append(txt('h2','',k),txt('span','',live?live+' pages':'planned'));
+    const g=el('div','tiles');g.dataset.cat=k;
+    list.forEach(m=>{
+      const t=el('button','tile'+(planned(m)?' planned':''));t.dataset.id=m.id;
+      t.append(el('span','dot'),txt('span','ic',m.icon||'•'),txt('span','t',m.label));
+      if(planned(m)){t.append(txt('span','tag','PLANNED · NOT CONNECTED'));t.setAttribute('aria-label',m.label+', planned, not connected')}
+      t.onclick=()=>openPage(m.id,t);g.appendChild(t)});
+    c.append(sec,g)});
+  paintDots();
+}
+$('#q').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  $$('#cats .tiles').forEach(g=>{let n=0;
+    g.querySelectorAll('.tile').forEach(t=>{const m=cfg.modules.find(x=>x.id===t.dataset.id);
+      const hit=!q||(m.label+' '+(m.category||'')).toLowerCase().includes(q);t.hidden=!hit;if(hit)n++});
+    g.hidden=!n;$('#cats .sec[data-cat="'+CSS.escape(g.dataset.cat)+'"]').hidden=!n})});
+function paintDots(){$$('.tile').forEach(t=>{const m=cfg.modules.find(x=>x.id===t.dataset.id);if(m)t.querySelector('.dot').className='dot '+stateOf(m)})}
+
+function renderBento(svcs){
+  const b=$('#bento');b.textContent='';
+  const up=svcs.filter(s=>s.state==='UP').length;
+  const hero=el('button','card stat hero');
+  hero.append(txt('span','k','System health'),txt('span','v',up+' of '+svcs.length+' services up'));
+  const bar=el('div','bar','<i></i>');bar.firstChild.style.width=(svcs.length?up/svcs.length*100:0)+'%';hero.append(bar);
+  hero.onclick=e=>openSheet(e.currentTarget);b.appendChild(hero);
+  [[11880,'BlueBot'],[11770,'Owner Gate'],[11883,'Termux readback'],[11437,'Local model']].forEach(([p,name])=>{
+    const s=svcs.find(x=>x.port===p)||{state:'UNKNOWN'};
+    const c=el('div','card stat');const k=el('span','k');k.append(el('span','dot '+s.state),document.createTextNode(name));
+    c.append(k,txt('span','v',s.state==='UP'?'Online':s.state==='DOWN'?'Offline':s.state==='ERROR'?'Needs check':'Unknown'),txt('span','m',':'+p+(s.code?' · '+s.ms+'ms':'')));
+    b.appendChild(c)});
+}
+
+/* ---------- health ---------- */
+async function refresh(){
+  let d;try{d=await (await fetch('/hub/health',{cache:'no-store'})).json()}catch(e){$('#sText').textContent='hub offline';$('#sDot').className='dot DOWN';return}
+  health={};d.services.forEach(s=>health[s.port]=s);
+  const up=d.services.filter(s=>s.state==='UP').length,n=d.services.length;
+  $('#sText').textContent=up+'/'+n+' up';$('#sDot').className='dot '+(up===n?'UP':up?'ERROR':'DOWN');
+  const L=$('#svcList');L.textContent='';
+  d.services.forEach(s=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',s.role),txt('small','',':'+s.port));
+    r.append(el('span','dot '+s.state),mid,txt('code','',s.code?('HTTP '+s.code+' · '+s.ms+'ms'):s.state));L.appendChild(r)});
+  renderBento(d.services);paintDots();refreshTruth();
+}
+$('#stRefresh').onclick=()=>{refresh();refreshTruth()};
+let truthData=null;
+async function refreshTruth(){let t;try{t=await (await fetch('/hub/truth',{cache:'no-store'})).json()}catch(e){return}
+  truthData=t;const C=$('#truthChecks');C.textContent='';
+  t.checks.forEach(c=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',c.name),txt('small','',c.detail));
+    r.append(el('span','dot '+(c.state==='PASS'?'UP':c.state==='FAIL'?'DOWN':'ERROR')),mid,txt('code','',c.state));C.append(r)});
+  $('#truthWhen').textContent='Termux is the source of truth · read '+new Date(t.ts*1000).toLocaleTimeString()+' · '+t.summary.PASS+' pass, '+t.summary.WARN+' warn, '+t.summary.FAIL+' fail';
+  const D=$('#truthDetail');D.textContent='';
+  const add=(a,b,st)=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',a),txt('small','',b||''));r.append(el('span','dot '+(st||'')),mid,txt('code','',''));D.append(r)};
+  t.files.forEach(f=>add(f.name,f.state+' · '+(f.sha||'—')+(f.state==='DRIFT'?' (expected '+f.expected+')':''),f.state==='MATCH'?'UP':f.state==='DRIFT'?'ERROR':'DOWN'));
+  t.watch.forEach(f=>add(f.name,f.state+' · '+(f.sha||'—'),f.state==='PRESENT'?'UP':'DOWN'));
+  Object.entries(t.processes).forEach(([k,n])=>add('process: '+k,n+' running',n?'UP':''));
+  add('tmux windows',t.tmux.map(w=>w.index+':'+w.name+(w.dead==='1'?'(dead)':'')).join('  ')||'none',t.tmux.length?'UP':'DOWN');
+  add('autopilot',JSON.stringify(t.autopilot.queue_counts)+' · active '+(t.autopilot.active.join(', ')||'none')+' · BR37N2 '+t.autopilot.br37n2+' · lock '+(t.autopilot.global_lock_present?'present':'absent'));
+  add('LouKey inbox','bundle '+JSON.stringify(t.loukey.approved_bundle)+' · error '+(t.loukey.error||'none'));
+  if(t.summary.FAIL){$('#sDot').className='dot DOWN';$('#sText').textContent='⚠ '+t.summary.FAIL+' check'+(t.summary.FAIL>1?'s':'')}}
+$('#truthCopy').onclick=async e=>{try{copy(await (await fetch('/hub/truth.txt',{cache:'no-store'})).text(),e.currentTarget)}catch(_){}};
+$('#statusBtn').addEventListener('click',refreshTruth);
+async function refreshBrains(){let d;try{d=await (await fetch('/hub/brains',{cache:'no-store'})).json()}catch(e){return}
+  const L=$('#brainList');L.textContent='';
+  $('#brainNote').textContent=d.keys_file_exists?(d.keys_file_private?'keys file private ✓':'⚠ chmod 600 your keys file'):'no keys file yet';
+  d.brains.forEach((b,i)=>{const r=el('div','svc');const mid=el('div');const h=b.local?health[{bluebot:11880,qwen:11437,llama:11438}[b.id]]:null;
+    const st=b.local?(h?h.state:'UNKNOWN'):(b.ready?'UP':'PLANNED');
+    mid.append(txt('b','',(i+1)+'. '+b.label),txt('small','',b.local?'local':(b.ready?'key set'+(b.model?' · '+b.model:''):'needs '+b.needs)));
+    r.append(el('span','dot '+st),mid,txt('code','',b.local?(h&&h.code?'HTTP '+h.code:st):(b.ready?'ready':'—')));L.append(r)})}
+$('#statusBtn').addEventListener('click',refreshBrains);
+$('#voiceCheckBtn').onclick=voiceCheck;
+
+/* ---------- sheet ---------- */
+function openSheetEl(sel,from){closeSheet(true);opener=from||document.activeElement;$('#scrim').classList.add('on');const s=$(sel);s.classList.add('on');s.setAttribute('aria-hidden','false');
+  (s.querySelector('button,input')||s).focus();if(sel==='#termSheet')termStart()}
+function openSheet(from){openSheetEl('#statusSheet',from)}
+function closeSheet(keep){const s=document.querySelector('.sheet.on');if(!s)return;s.classList.remove('on');s.setAttribute('aria-hidden','true');$('#scrim').classList.remove('on');
+  if(s.id==='termSheet')termStop();if(!keep&&opener&&opener.focus)opener.focus();if(!keep)opener=null}
+$('#statusBtn').onclick=e=>openSheet(e.currentTarget);$('#scrim').onclick=()=>closeSheet();
+
+/* ---------- viewer: old pages full screen, one bar, Back returns ---------- */
+let vOpener=null,current=null;
+function openPage(id,from,force){
+  const m=cfg.modules.find(x=>x.id===id);if(!m)return;
+  current=id;if(from)vOpener=from;
+  $('#vTitle').textContent=m.label;$('#vUrl').textContent=planned(m)?'PLANNED / NOT CONNECTED':m.native?'native module · '+m.native+'.js':m.url;
+  $('#vOpen').hidden=planned(m)||!m.url;if(m.url)$('#vOpen').href=m.url;
+  frames.forEach(f=>f.classList.remove('on'));stopNative();
+  const show=(t,p,retry)=>{$('#vMsgT').textContent=t;$('#vMsgP').textContent=p;$('#vForce').hidden=!retry;$('#vMsg').hidden=false};
+  $('#vMsg').hidden=true;
+  if(planned(m))show(m.label+' · Planned',(m.category||'This')+' space is reserved. Nothing is installed, connected or authorised yet. It goes live only after real runtime proof and your approval.',false);
+  else if(m.native)openNative(m,show);
+  else if(!isLocal(m.url))show('Blocked','Only 127.0.0.1 pages can open here.',false);
+  else if(!frames.has(id)&&stateOf(m)==='DOWN'&&!force)show(m.label+' is offline','Port '+portOf(m.url)+' isn’t answering. Start that service, then try again.',true);
+  else{let f=frames.get(id);if(!f){f=document.createElement('iframe');f.title=m.label;f.src=m.url;
+      f.setAttribute('allow','microphone; display-capture; clipboard-write');$('#frames').appendChild(f);frames.set(id,f)}
+    f.classList.add('on')}
+  const v=$('#viewer');v.classList.add('on');v.setAttribute('aria-hidden','false');document.body.classList.add('viewing');
+  $('#composer').hidden=true;$('#vBack').focus();
+}
+function closeViewer(silent){
+  const v=$('#viewer');if(!v.classList.contains('on'))return;
+  v.classList.remove('on');v.setAttribute('aria-hidden','true');document.body.classList.remove('viewing');current=null;stopNative();
+  $('#composer').hidden=tab!=='chat';markNav(tab);
+  if(!silent&&vOpener&&vOpener.focus)vOpener.focus();vOpener=null;
+}
+$('#vBack').onclick=()=>closeViewer();
+$('#vReload').onclick=()=>{const m=cfg.modules.find(x=>x.id===current);if(m&&m.native)return openPage(current,null,true);const f=frames.get(current);if(f)f.src=f.src;else if(current)openPage(current,null,true)};
+$('#vForce').onclick=()=>openPage(current,null,true);
+
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(!$('#pal').hidden)return closePal();
+  if(document.querySelector('.sheet.on'))return closeSheet();
+  if($('#viewer').classList.contains('on'))return closeViewer();
+});
+
+/* ---------- chat v2: multi-bot, conversations, markdown, stop, voice, screenshot ----------
+   Every message goes to POST /hub/chat -> 11880 /api/chat (the only write the hub has).
+   A bot = a prefix on that route (e.g. "@grok "). Nothing here runs commands. */
+const input=$('#input'),msgs=$('#msgs');
+const BOTS=()=>(cfg.bots&&cfg.bots.length?cfg.bots:[{id:'bluebot',label:'BlueBot',icon:'♣',prefix:''}]);
+let convs=[];try{convs=JSON.parse(recall('lousta.convs')||'[]')}catch(e){convs=[]}
+let conv=null,shot=null,ctrl=null;
+const saveConvs=()=>store('lousta.convs',JSON.stringify(convs.slice(0,40).map(c=>({...c,messages:c.messages.slice(-80).map(m=>({...m,shot:undefined}))}))));
+const uid=p=>p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function botOf(id,label){return BOTS().find(b=>b.id===id)||BOTS().find(b=>b.label===label)||null}
+function badge(d,b){if(b&&b.color)d.style.setProperty('--bc',b.color);const w=d.querySelector('.who');if(w){const a=txt('span','av',(b&&b.icon)||'•');w.prepend(a)}}
+function bot(){return BOTS().find(b=>b.id===(conv&&conv.bot))||BOTS()[0]}
+function newConv(botId){conv={id:uid('conv'),title:'New chat',bot:botId||(conv?conv.bot:BOTS()[0].id),messages:[],ts:Date.now()};convs.unshift(conv);renderConv();saveConvs()}
+function setBot(id,keepGroup){if(!conv)newConv(id);conv.bot=id;if(!keepGroup)delete conv.group;const b=bot(),g=groupIds();
+  $('#botIc').textContent=g?'👥':(b.icon||'•');$('#botName').textContent=g?g.map(i=>(BOTS().find(x=>x.id===i)||{}).label).join(' + '):b.label;
+  input.placeholder=g?'Message the group…':'Message '+b.label+'…';saveConvs()}
+function grow(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,160)+'px';$('#sendBtn').disabled=!busy&&!input.value.trim()&&!shot}
+input.addEventListener('input',grow);
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();$('#composer').requestSubmit()}});
+$$('.sugg button').forEach(b=>b.onclick=()=>{input.value=b.textContent;grow();input.focus()});
+
+/* safe markdown: builds DOM nodes, never innerHTML from replies */
+function inline(parent,text){
+  const re=/(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*)|(\[[^\]]+\]\((https?:\/\/[^\s)]+)\))/g;let i=0,m;
+  while((m=re.exec(text))){if(m.index>i)parent.append(text.slice(i,m.index));const t=m[0];
+    if(m[1])parent.append(txt('code','',t.slice(1,-1)));
+    else if(m[2])parent.append(txt('strong','',t.slice(2,-2)));
+    else if(m[3])parent.append(txt('em','',t.slice(1,-1)));
+    else{const a=txt('a','',t.slice(1,t.indexOf(']')));a.href=m[5];a.target='_blank';a.rel='noopener noreferrer';parent.append(a)}
+    i=m.index+t.length}
+  if(i<text.length)parent.append(text.slice(i))}
+function md(src){
+  const root=el('div','md');const parts=String(src).split(/```/);
+  parts.forEach((part,k)=>{
+    if(k%2){const nl=part.indexOf('\n');const lang=nl>0?part.slice(0,nl).trim():'';const code=nl>0?part.slice(nl+1):part;
+      const box=el('div','code'),bar=el('div','bar2');bar.append(txt('span','',lang||'code'));
+      const cp=txt('button','mini','Copy');cp.onclick=()=>copy(code.replace(/\n$/,''),cp);bar.append(cp);
+      box.append(bar,txt('pre','',code.replace(/\n$/,'')));root.append(box);return}
+    let list=null,para=[];
+    const flush=()=>{if(para.length){const p=el('p');inline(p,para.join(' '));root.append(p);para=[]}};
+    part.split('\n').forEach(line=>{
+      const h=line.match(/^(#{1,4})\s+(.*)/),li=line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
+      if(h){flush();list=null;const e=el(h[1].length<3?'h3':'h4');inline(e,h[2]);root.append(e)}
+      else if(li){flush();if(!list){list=el(/^\s*\d/.test(line)?'ol':'ul');root.append(list)}const e=el('li');inline(e,li[1]);list.append(e)}
+      else if(!line.trim()){flush();list=null}
+      else{list=null;para.push(line)}});
+    flush()});
+  return root}
+function copy(t,btn){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{if(btn){btn.textContent='Copied';setTimeout(()=>btn.textContent='Copy',1200)}}).catch(()=>{})}
+function speak(t,btn){if(!('speechSynthesis' in window))return;if(speechSynthesis.speaking){speechSynthesis.cancel();return}
+  const u=new SpeechSynthesisUtterance(t.replace(/```[\s\S]*?```/g,' code block ').slice(0,4000));speechSynthesis.speak(u)}
+
+function drawMsg(m){
+  const d=el('div','msg '+(m.role==='me'?'me':'bot')+(m.err?' err':''));
+  d.append(txt('span','who',m.role==='me'?'You':(m.who||'BlueBot')));
+  if(m.role==='me'){const b=el('span');b.textContent=m.text;d.append(b);if(m.shot){const im=el('img','shot');im.src=m.shot;im.alt='attached screenshot';d.append(im)}}
+  else{badge(d,botOf(m.bot,m.who));d.append(md(m.text));if(m.raw){d.append(txt('pre','',m.raw))}
+    d.append(txt('span','meta',m.meta||''));
+    const acts=el('div','msgacts');const c=txt('button','mini','Copy');c.onclick=()=>copy(m.text,c);
+    const sp=txt('button','mini','Speak');sp.onclick=()=>speak(m.text,sp);acts.append(c,sp);
+    moduleTools(m.text,acts,d);
+    if(m.retry){const r=txt('button','mini','Retry');r.onclick=()=>{input.value=m.retry;grow();$('#composer').requestSubmit()};acts.append(r)}
+    d.append(acts)}
+  msgs.appendChild(d);$('#empty').hidden=true;return d}
+function renderConv(){msgs.textContent='';$('#empty').hidden=!!(conv&&conv.messages.length);(conv?conv.messages:[]).forEach(drawMsg);
+  if(conv)setBot(conv.bot,true);const last=msgs.lastElementChild;if(last)last.scrollIntoView({block:'end'})}
+
+function pickReply(j){
+  if(typeof j==='string'){const t=j.trim();if(/^[\[{]/.test(t)){try{const r=pickReply(JSON.parse(t));if(r)return r}catch(e){}}return t||null}
+  if(!j||typeof j!=='object')return null;
+  for(const k of ['reply','response','answer','text','message','content','output','result']){
+    const v=j[k];if(typeof v==='string'&&v.trim())return pickReply(v);if(v&&typeof v==='object'){const r=pickReply(v);if(r)return r}}
+  return j.data?pickReply(j.data):null}
+
+/* the ONE network write in this app */
+async function postChat(payload,signal){
+  try{const r=await fetch('/hub/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal});
+    const raw=await r.text();let j=raw;try{j=JSON.parse(raw)}catch(_){}return {code:r.status,j}}
+  catch(e){return {code:e.name==='AbortError'?-1:0,j:{error:e.name==='AbortError'?'STOPPED_BY_OWNER':'HUB_UNREACHABLE'}}}}
+
+function groupIds(){return conv&&conv.group&&conv.group.length>1?conv.group:null}
+function groupPrompt(b,mode){
+  const ids=groupIds()||[b.id];const names=ids.map(i=>(BOTS().find(x=>x.id===i)||{}).label).filter(Boolean);
+  const tr=conv.messages.slice(-10).map(m=>(m.role==='me'?'Louie':(m.who||'Bot'))+': '+String(m.text).slice(0,700)).join('\n');
+  return '[GROUP CHAT · participants: Louie (owner), '+names.join(', ')+']\nRecent conversation:\n'+tr+'\n\nYou are '+b.label+'. '+
+    (mode==='continue'?'Continue the discussion: respond to what the other bots just said, add something new, keep it short.'
+                      :'Reply to Louie\'s latest message in your own voice, briefly. You may build on or challenge the other bots; do not repeat them.')+
+    ' Drafts and advice only. Nothing runs without Louie\'s Gate.'}
+async function botTurn(b,content,opts){
+  const wait=el('div','msg bot','<span class="who"></span><span class="typing"><i></i><i></i><i></i></span>');wait.firstChild.textContent=b.label;badge(wait,b);msgs.appendChild(wait);wait.scrollIntoView({behavior:'smooth',block:'end'});
+  const key=(cfg.chat&&cfg.chat.message_key)||'message',trace=uid('tr');
+  const payload={[key]:(b.prefix||'')+content,conversation_id:conv.id,trace_id:trace,source:'hub_11082',bot:b.id};
+  if(groupIds())payload.group=groupIds();
+  else payload.history=conv.messages.slice(0,-1).slice(-10).filter(m=>!m.err).map(m=>({role:m.role,text:String(m.text).slice(0,4000)}));
+  if(b.brain)payload.brain=b.brain;
+  const ik=cfg.chat&&cfg.chat.image_key;if(opts.shot&&ik)payload[ik]=opts.shot;
+  const t0=performance.now();const {code,j}=await postChat(payload,opts.signal);wait.remove();
+  const ms=Math.round(performance.now()-t0),reply=code>=200&&code<300?pickReply(j):null;
+  const route=j&&typeof j==='object'&&typeof (j.route||j.department||j.lane)==='string'?(j.route||j.department||j.lane):'';
+  const via=j&&typeof j==='object'&&j.brain&&j.brain!=='bluebot'&&!b.brain?((cfg.brains&&cfg.brains.list&&cfg.brains.list[j.brain]||{}).label||j.brain):'';
+  const msg={role:'bot',who:b.label+(via?' → '+via+' (backup)':''),bot:b.id,ts:Date.now(),retry:reply?null:opts.userText,err:!reply,
+    text:reply||(code===-1?'Stopped.':code===422||code===400?b.label+' didn’t accept the message format. Set chat.message_key in modules.json (see README).':code===502||code===0?'No brain answered. BlueBot: '+((j&&j.bluebot)||'unreachable')+(j&&j.tried?' · tried '+j.tried.map(t=>t.id+' '+t.result).join(', '):'')+'. Add an API key in ~/.lousta/keys.env or start the local model.':b.label+' returned HTTP '+code+'.'),
+    raw:reply||code===-1?'':(typeof j==='string'?j:JSON.stringify(j,null,1)).slice(0,600),
+    meta:[trace,code>0?'HTTP '+code:'',ms+'ms',route,opts.shot&&!ik?'screenshot not sent (image_key unset)':''].filter(Boolean).join(' · ')};
+  conv.messages.push(msg);drawMsg(msg).scrollIntoView({behavior:'smooth',block:'end'});conv.ts=Date.now();saveConvs();
+  return {ok:!!reply,code,text:msg.text,bot:b.id,who:b.label}}
+async function round(opts,mode){
+  const ids=opts.bot?[opts.bot]:(groupIds()||[bot().id]);const out=[];
+  for(const id of ids){const b=BOTS().find(x=>x.id===id);if(!b)continue;
+    const content=ids.length>1?groupPrompt(b,mode):opts.userText;
+    const r=await botTurn(b,content,opts);out.push(r);if(r.code===-1)break}
+  if(ids.length>1&&!out.some(r=>r.code===-1))drawContinue();
+  return out}
+async function ask(text,opts){
+  opts=opts||{};if(!conv)newConv();opts.userText=text;
+  const old=msgs.querySelector('.cont');if(old)old.remove();
+  const mine={role:'me',text,shot:opts.shot||null,ts:Date.now()};conv.messages.push(mine);drawMsg(mine).scrollIntoView({behavior:'smooth',block:'end'});
+  if(conv.title==='New chat')conv.title=text.slice(0,48);
+  const out=await round(opts,'reply');const last=out[out.length-1]||{ok:false,code:0,text:''};
+  return {...last,ok:out.length>0&&out.every(r=>r.ok),replies:out}}
+function drawContinue(){const d=el('div','msgacts cont');const b=txt('button','mini','↻ Let them continue');
+  b.onclick=async()=>{if(busy)return;d.remove();setBusy(true);ctrl=new AbortController();const out=await round({signal:ctrl.signal},'continue');ctrl=null;setBusy(false);if(talk)talkSpeak(out)};
+  d.append(b);msgs.appendChild(d)}
+
+let busy=false;
+function setBusy(v){busy=v;const s=$('#sendBtn');s.classList.toggle('stop',v);s.setAttribute('aria-label',v?'Stop':'Send');
+  s.innerHTML=v?'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';grow()}
+$('#composer').addEventListener('submit',async e=>{
+  e.preventDefault();if(busy){if(ctrl)ctrl.abort();return}
+  const text=input.value.trim();if(!text&&!shot)return;
+  const s2=shot;input.value='';clearShot();grow();setBusy(true);ctrl=new AbortController();
+  await ask(text||'(screenshot)',{shot:s2,signal:ctrl.signal});ctrl=null;setBusy(false)});
+
+/* module tools: a reply that contains a hub module gets Check · Save .js · Copy promote */
+function modLint(name,src){const R=[];
+  if(!/^[a-z0-9_]{1,40}$/.test(name))R.push('module id must be lowercase a-z 0-9 _');
+  if(src.length>100000)R.push('larger than 100 KB');
+  if(!new RegExp("LoustaHub\\.register\\(\\s*\\{[^}]*id:\\s*['\"]"+name+"['\"]").test(src))R.push("must call LoustaHub.register({id:'"+name+"'})");
+  if(!/render/.test(src))R.push('missing render(el, api)');
+  const body=src.replace(/\/\*[\s\S]*?\*\//g,m=>'\n'.repeat((m.match(/\n/g)||[]).length));
+  const rules=[[/\bfetch\s*\(/,'direct fetch (use api.get)'],[/XMLHttpRequest|WebSocket|EventSource|sendBeacon/,'direct network transport'],
+    [/\beval\s*\(|new\s+Function\s*\(|\bimport\s*\(/,'dynamic code'],[/innerHTML\s*=|outerHTML\s*=|insertAdjacentHTML|document\.write/,'raw HTML injection'],
+    [/11884|tmux|run-approved|stage-approved|release-approved|\/loukey\/auto|\/api\/decision|\/api\/gate/,'execution or gate path'],
+    [/['"](POST|PUT|PATCH|DELETE)['"]/,'write method'],[/document\.cookie|localStorage\.clear|sessionStorage\.clear/,'storage tampering'],
+    [/https?:\/\/(?!127\.0\.0\.1|localhost)[a-z0-9]/,'non-local URL'],[/LoustaHub\s*=/,'overwrites the hub API']];
+  body.split('\n').forEach((line,i)=>{const code=line.replace(/(^|[^:])\/\/.*$/,'$1');rules.forEach(([re,why])=>{if(re.test(code))R.push('line '+(i+1)+': '+why)})});
+  return R}
+function moduleTools(text,acts,box){
+  const m=String(text).match(/```(?:js|javascript)?\s*\n([\s\S]*?LoustaHub\.register[\s\S]*?)```/);if(!m)return;
+  const src=m[1].replace(/\n$/,'')+'\n';const idm=src.match(/LoustaHub\.register\(\s*\{[^}]*?id:\s*['"]([^'"]+)['"]/);const name=idm?idm[1]:'module';
+  const wo=((wos&&wos.orders)||[]).find(o=>o.module===name);
+  const out=el('div','warns');out.hidden=true;
+  const chk=txt('button','mini','Check '+name+'.js');
+  chk.onclick=()=>{const R=modLint(name,src);out.textContent='';out.hidden=false;
+    if(!R.length)out.append(txt('span','','✅ CHECK=PASS · Save it, then run the promote command in Termux'));else R.forEach(r=>out.append(txt('span','x','⛔ '+r)))};
+  const save=txt('button','mini','Save .js');save.onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));a.download=name+'.js';document.body.append(a);a.click();a.remove();save.textContent='Saved to Downloads'};
+  const pc=txt('button','mini','Copy promote command');pc.onclick=async()=>{const dir=await getHubDir();
+    copy('bash "'+dir+'/PROMOTE_MODULE.sh" ~/storage/downloads/'+name+'.js '+((wo&&wo.tile)||name)+(wo?'':' Observe'),pc)};
+  acts.append(chk,save,pc);if(box)box.append(out)}
+
+/* bots + conversations sheets */
+function renderBots(){const L=$('#botList');L.textContent='';const g=groupIds();
+  const gs=el('div','card');gs.append(txt('b','','Group chat'),txt('p','sub','Pick two or more. Each bot answers in turn and sees the others.'));
+  BOTS().forEach(b=>{const l=el('label','chk');const c=el('input');c.type='checkbox';c.value=b.id;c.checked=!!(g&&g.includes(b.id));l.append(c,txt('span','',(b.icon||'')+' '+b.label));gs.append(l)});
+  const go2=txt('button','btn pri','Start group chat');go2.onclick=()=>{const ids=[...gs.querySelectorAll('input:checked')].map(c=>c.value);
+    if(ids.length<2){go2.textContent='Pick at least 2';return}newConv(ids[0]);conv.group=ids;conv.title='Group · '+ids.map(i=>(BOTS().find(x=>x.id===i)||{}).label).join(' + ');setBot(ids[0],true);saveConvs();closeSheet();input.focus()};
+  gs.append(go2);L.append(txt('p','sub','One bot'));
+  BOTS().forEach(b=>{const li=el('button','li');li.setAttribute('aria-current',String(!g&&b.id===bot().id));
+  const mid=el('div');mid.append(txt('b','',b.label),txt('small','',(b.prefix?b.prefix.trim()+' · ':'')+(b.desc||'')));
+  const ic=txt('span','ic',b.icon||'•');if(b.color)ic.style.setProperty('--bc',b.color);li.append(ic,mid,txt('span','',!g&&b.id===bot().id?'✓':''));li.onclick=()=>{setBot(b.id);closeSheet()};L.append(li)});L.append(gs)}
+$('#botBtn').onclick=e=>{renderBots();openSheetEl('#botSheet',e.currentTarget)};
+function renderConvList(){const L=$('#convList');L.textContent='';convs.forEach(c=>{const li=el('button','li');li.setAttribute('aria-current',String(conv&&c.id===conv.id));
+  const mid=el('div');const b=BOTS().find(x=>x.id===c.bot)||BOTS()[0];mid.append(txt('b','',c.title),txt('small','',(c.group&&c.group.length>1?'Group of '+c.group.length:b.label)+' · '+c.messages.length+' messages · '+new Date(c.ts).toLocaleString()));
+  li.append(txt('span','ic',b.icon||'•'),mid,txt('span','','›'));li.onclick=()=>{conv=c;renderConv();closeSheet()};L.append(li)});
+  if(!convs.length)L.append(txt('p','sub','No conversations yet.'))}
+$('#chatsBtn').onclick=e=>{renderConvList();openSheetEl('#chatsSheet',e.currentTarget)};
+$('#newChat').onclick=()=>{newConv();closeSheet();input.focus()};
+
+/* voice dictation: fills the box, never sends */
+/* ---------- voice: works in any browser ----------
+   native : the browser's own speech recognition (Chrome)
+   record : record with the mic, the hub turns it into text (/hub/transcribe: local whisper, Groq or OpenAI)
+   If native fails (Edge/Samsung often report "network" or "not-allowed by service"), it switches to record. */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+const CAN_REC=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+let voiceMode=(()=>{try{return localStorage.getItem('lousta.voice')}catch(e){return null}})()||(SR?'native':(CAN_REC?'record':'none'));
+function setVoiceMode(m){voiceMode=m;store('lousta.voice',m)}
+$('#micBtn').hidden=$('#talkBtn').hidden=!(SR||CAN_REC);
+let recState=null;
+/* record one utterance. silence:true stops ~1.4s after you stop talking. Returns a Blob (or null). */
+async function recordOnce(opts){
+  opts=opts||{};const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  const types=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];const type=types.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
+  const mr=new MediaRecorder(stream,type?{mimeType:type}:undefined);const chunks=[];mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  let ac=null,raf=0,spoke=false,quietSince=0;
+  const done=new Promise(res=>{mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());cancelAnimationFrame(raf);if(ac)ac.close().catch(()=>{});
+    res(chunks.length&&spoke!==false?new Blob(chunks,{type:mr.mimeType||type||'audio/webm'}):(chunks.length?new Blob(chunks,{type:mr.mimeType||'audio/webm'}):null))}});
+  if(opts.silence){try{ac=new (window.AudioContext||window.webkitAudioContext)();const an=ac.createAnalyser();an.fftSize=1024;ac.createMediaStreamSource(stream).connect(an);
+    const buf=new Uint8Array(an.fftSize);const t0=performance.now();spoke=false;
+    const tick=()=>{an.getByteTimeDomainData(buf);let s=0;for(const v of buf){const d=(v-128)/128;s+=d*d}const rms=Math.sqrt(s/buf.length),now=performance.now();
+      if(rms>0.045){spoke=true;quietSince=now}
+      if(spoke&&now-quietSince>1400&&mr.state==='recording')mr.stop();
+      if(!spoke&&now-t0>8000&&mr.state==='recording'){spoke=false;mr.stop()}
+      if(mr.state==='recording')raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}catch(e){}}
+  mr.start(250);recState={stop:()=>{if(mr.state==='recording')mr.stop()}};
+  setTimeout(()=>{if(mr.state==='recording')mr.stop()},opts.maxMs||30000);
+  const blob=await done;recState=null;return opts.silence&&!spoke?null:blob}
+async function transcribeBlob(blob){
+  const r=await fetch('/hub/transcribe',{method:'POST',headers:{'Content-Type':blob.type||'audio/webm'},body:blob});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.tried?j.tried.map(t=>t.id+' '+t.result).join(', '):('HTTP '+r.status));return (j.text||'').trim()}
+function micUi(on){$('#micBtn').classList.toggle('rec',on);$('#micBtn').setAttribute('aria-pressed',String(on))}
+async function dictateRecord(){
+  if(recState){recState.stop();return}
+  micUi(true);const ph=input.placeholder;input.placeholder='Recording… tap the mic to stop';
+  try{const blob=await recordOnce({maxMs:60000});micUi(false);if(!blob)return;input.placeholder='Turning speech into text…';
+    const t=await transcribeBlob(blob);if(t){input.value=(input.value?input.value+' ':'')+t;grow()}}
+  catch(e){toastVoice('Voice: '+(e.message||e))}
+  finally{micUi(false);input.placeholder=ph;input.focus()}}
+function toastVoice(msg){const d=el('div','msg bot err');d.append(txt('span','who','Voice'),txt('span','',msg+'. Open System → Voice check.'));msgs.appendChild(d);$('#empty').hidden=true;d.scrollIntoView({behavior:'smooth',block:'end'})}
+$('#micBtn').onclick=()=>{
+  if(voiceMode!=='native'||!SR)return dictateRecord();
+  if(rec){rec.stop();return}rec=new SR();rec.interimResults=true;rec.continuous=false;rec.lang=navigator.language||'en-AU';
+  const base=input.value?input.value+' ':'';rec.onresult=ev=>{let t='';for(const r of ev.results)t+=r[0].transcript;input.value=base+t;grow()};
+  rec.onend=()=>{rec=null;micUi(false);input.focus()};
+  rec.onerror=ev=>{if(['network','service-not-allowed','language-not-supported'].includes(ev.error)&&CAN_REC){setVoiceMode('record');rec=null;micUi(false);dictateRecord()}
+    else if(ev.error==='not-allowed')toastVoice('Microphone permission is blocked for this site')};
+  micUi(true);rec.start()};
+
+/* talk mode: hands-free voice conversation (opt-in). You speak -> it sends -> each bot answers aloud -> listens again.
+   This is the one place a message sends without tapping Send, and only while Talk is on. Chat only: nothing runs. */
+let talk=false,talkRec=null;
+function voiceFor(i){const vs=('speechSynthesis' in window)?speechSynthesis.getVoices():[];const lang=(navigator.language||'en').slice(0,2);
+  const mine=vs.filter(v=>v.lang&&v.lang.startsWith(lang));const pool=mine.length?mine:vs;return pool.length?pool[i%pool.length]:null}
+function sayAsync(text,i){return new Promise(res=>{if(!('speechSynthesis' in window)||!talk)return res();
+  const u=new SpeechSynthesisUtterance(String(text).replace(/```[\s\S]*?```/g,' code block ').replace(/[*#`>_]/g,'').slice(0,1500));
+  const v=voiceFor(i);if(v)u.voice=v;u.pitch=[1,.8,1.25,.95][i%4];u.rate=1.04;u.onend=u.onerror=()=>res();speechSynthesis.speak(u)})}
+async function talkSpeak(out){
+  for(const r of out){if(!talk)return;if(!r.ok)continue;$('#talkState').textContent=r.who+' is speaking…';
+    await sayAsync(r.text,Math.max(0,BOTS().findIndex(b=>b.id===r.bot)))}
+  if(talk)talkListen()}
+async function talkHeard(t){
+  if(!talk)return;t=(t||'').trim();
+  if(!t){setTimeout(talkListen,300);return}
+  if(/^(stop|end talk|stop talking)\.?$/i.test(t)){talkOff();return}
+  $('#talkState').textContent='Thinking…';input.value='';grow();setBusy(true);ctrl=new AbortController();
+  const r=await ask(t,{signal:ctrl.signal});ctrl=null;setBusy(false);talkSpeak(r.replies||[])}
+async function talkListenRecord(){
+  $('#talkState').textContent='Listening… (speak, then pause)';
+  try{const blob=await recordOnce({silence:true,maxMs:30000});if(!talk)return;
+    if(!blob){setTimeout(talkListen,200);return}
+    $('#talkState').textContent='Hearing you…';const t=await transcribeBlob(blob);input.value=t;grow();talkHeard(t)}
+  catch(e){talkOff();toastVoice('Talk: '+(e.message||e))}}
+function talkListen(){
+  if(!talk)return;input.value='';grow();
+  if(voiceMode!=='native'||!SR)return talkListenRecord();
+  $('#talkState').textContent='Listening…';
+  talkRec=new SR();talkRec.interimResults=true;talkRec.continuous=false;talkRec.lang=navigator.language||'en-AU';
+  let said='',failed=false;talkRec.onresult=ev=>{said='';for(const r of ev.results)said+=r[0].transcript;input.value=said;grow()};
+  talkRec.onerror=ev=>{if(['network','service-not-allowed','language-not-supported'].includes(ev.error)&&CAN_REC){failed=true;setVoiceMode('record')}
+    else if(ev.error==='not-allowed'){talkOff();toastVoice('Microphone permission is blocked for this site')}};
+  talkRec.onend=()=>{talkRec=null;if(!talk)return;if(failed)return talkListenRecord();talkHeard(said)};
+  try{talkRec.start()}catch(e){setTimeout(talkListen,500)}}
+function talkOn(){if(!SR&&!CAN_REC){toastVoice('This browser has no microphone support');return}
+  talk=true;$('#talkBtn').setAttribute('aria-pressed','true');$('#talkBar').hidden=false;talkListen()}
+function talkOff(){talk=false;$('#talkBtn').setAttribute('aria-pressed','false');$('#talkBar').hidden=true;
+  if(talkRec){try{talkRec.abort()}catch(e){}talkRec=null}if(recState)recState.stop();if('speechSynthesis' in window)speechSynthesis.cancel();if(ctrl)ctrl.abort()}
+$('#talkBtn').onclick=()=>talk?talkOff():talkOn();$('#talkStop').onclick=talkOff;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&talk)talkOff()});
+
+/* voice check: everything about voice on THIS browser, in one place */
+async function voiceCheck(){
+  const L=$('#voiceList');L.textContent='';const row=(ok,a,b)=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',a),txt('small','',b||''));r.append(el('span','dot '+(ok===true?'UP':ok===false?'DOWN':'ERROR')),mid,txt('code','',ok===true?'yes':ok===false?'no':'?'));L.append(r)};
+  row(!!SR,'Built-in speech recognition',SR?'Chrome-style; may still fail on Edge/Samsung':'not in this browser: recording mode will be used');
+  row(CAN_REC,'Microphone recording','MediaRecorder + getUserMedia');
+  let perm='unknown';try{perm=(await navigator.permissions.query({name:'microphone'})).state}catch(e){}
+  row(perm==='granted'?true:perm==='denied'?false:null,'Microphone permission',perm);
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());row(true,'Microphone opens','ok')}
+  catch(e){row(false,'Microphone opens',e.name+': '+e.message)}
+  const vs=('speechSynthesis' in window)?speechSynthesis.getVoices().length:0;row(vs>0?true:('speechSynthesis' in window?null:false),'Read-aloud voices',vs+' voices');
+  try{const d=await (await fetch('/hub/voice',{cache:'no-store'})).json();d.stt.forEach(s=>row(s.ready,'Speech-to-text: '+s.id,s.ready?'ready':s.needs))}catch(e){row(false,'Hub speech-to-text','hub not reachable')}
+  row(null,'Voice mode in use',voiceMode+(SR&&CAN_REC?' (tap to switch)':''));
+  const sw=L.lastChild;if(SR&&CAN_REC){sw.style.cursor='pointer';sw.onclick=()=>{setVoiceMode(voiceMode==='native'?'record':'native');voiceCheck()}}}
+
+/* screen snapshot: one frame from screen share (desktop) or a screenshot from the gallery (phone) */
+function clearShot(){shot=null;$('#attach').hidden=true;$('#attach').textContent=''}
+function setShot(dataUrl,label){shot=dataUrl;const a=$('#attach');a.textContent='';const box=el('div','a');const im=el('img');im.src=dataUrl;im.alt='';
+  const x=txt('button','mini','Remove');x.onclick=()=>{clearShot();grow()};box.append(im,txt('span','',label+((cfg.chat&&cfg.chat.image_key)?'':' · preview only')),x);a.append(box);a.hidden=false;grow();input.focus()}
+function shrink(src,cb){const im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height));const c=document.createElement('canvas');
+  c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.72))};im.src=src}
+$('#shotBtn').onclick=async()=>{
+  const md2=navigator.mediaDevices;
+  if(md2&&md2.getDisplayMedia&&!/Android/i.test(navigator.userAgent)){
+    try{const st=await md2.getDisplayMedia({video:true,audio:false});const v=document.createElement('video');v.srcObject=st;v.muted=true;await v.play();
+      await new Promise(r=>setTimeout(r,350));const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+      st.getTracks().forEach(t=>t.stop());shrink(c.toDataURL('image/png'),u=>setShot(u,'Screen snapshot'))}catch(e){}
+  }else $('#fileIn').click()};
+$('#fileIn').onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>shrink(r.result,u=>setShot(u,f.name.slice(0,28)));r.readAsDataURL(f);e.target.value=''};
+
+/* live termux (read-only 11883) */
+let termT=null,termHist=false,termLast='';
+async function termPull(){
+  const T=cfg.termux||{};const body=$('#termBody');
+  if(!T.readback_url){body.textContent='';body.append(txt('p','sub','Not connected yet. Run the census, then set termux.readback_url in modules.json to the 11883 snapshot route.'));return}
+  const r=await api.get(T.readback_url);const k=termHist?T.history_key:T.screen_key;
+  const out=r.ok&&r.data&&typeof r.data==='object'?r.data[k]:null;body.textContent='';
+  if(typeof out==='string'){termLast=out;const pre=txt('pre','term',out.replace(/\s+$/,''));body.append(pre);pre.scrollTop=pre.scrollHeight;$('#termWhen').textContent=new Date().toLocaleTimeString()}
+  else body.append(txt('p','sub','Readback answered HTTP '+r.status+' without "'+k+'". Check termux keys in modules.json.'))}
+function termStart(){termPull();termT=setInterval(termPull,3000)}
+function termStop(){clearInterval(termT);termT=null}
+$('#termBtn').onclick=e=>openSheetEl('#termSheet',e.currentTarget);
+$('#termHist').onclick=e=>{termHist=!termHist;e.currentTarget.setAttribute('aria-pressed',String(termHist));termPull()};
+$('#termExplain').onclick=()=>{const t=termLast.split('\n').slice(-40).join('\n');closeSheet(true);go('chat');input.value='Explain this Termux output and suggest the next safe step (do not run anything):\n```\n'+t+'\n```';grow();input.focus()};
+
+/* command palette: Ctrl/⌘+K */
+let palItems=[],palSel=0,palOpener=null;
+function palData(){return [
+  ...BOTS().map(b=>({ic:b.icon,label:'Chat with '+b.label,hint:'bot',run:()=>{go('chat');setBot(b.id);input.focus()}})),
+  {ic:'+',label:'New chat',hint:'chat',run:()=>{go('chat');newConv();input.focus()}},
+  {ic:'›_',label:'Live Termux',hint:'panel',run:()=>openSheetEl('#termSheet')},
+  {ic:'▦',label:'Build: work orders & auto-build',hint:'view',run:()=>go('build')},
+  {ic:'◉',label:'System status',hint:'panel',run:()=>openSheet()},
+  ...cfg.modules.filter(m=>!planned(m)).map(m=>({ic:m.icon,label:m.label,hint:m.category||'page',run:()=>openPage(m.id)}))]}
+function openPal(){palOpener=document.activeElement;$('#pal').hidden=false;$('#palScrim').hidden=false;$('#palScrim').classList.add('on');$('#palIn').value='';palFilter();$('#palIn').focus()}
+function closePal(){$('#pal').hidden=true;$('#palScrim').hidden=true;$('#palScrim').classList.remove('on');if(palOpener&&palOpener.focus)palOpener.focus()}
+function palFilter(){const q=$('#palIn').value.toLowerCase();palItems=palData().filter(o=>!q||(o.label+' '+o.hint).toLowerCase().includes(q)).slice(0,30);palSel=0;palDraw()}
+function palDraw(){const L=$('#palOpts');L.textContent='';palItems.forEach((o,i)=>{const b=el('button','o');b.setAttribute('role','option');b.setAttribute('aria-selected',String(i===palSel));
+  b.append(txt('span','',o.ic||'•'),txt('span','',o.label),txt('small','',o.hint));b.onclick=()=>{closePal();o.run()};L.append(b)})}
+$('#palIn').addEventListener('input',palFilter);
+$('#palIn').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){palSel=Math.min(palSel+1,palItems.length-1);palDraw();e.preventDefault()}
+  else if(e.key==='ArrowUp'){palSel=Math.max(palSel-1,0);palDraw();e.preventDefault()}
+  else if(e.key==='Enter'&&palItems[palSel]){e.preventDefault();const o=palItems[palSel];closePal();setTimeout(o.run,0)}});
+$('#palScrim').onclick=closePal;
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#pal').hidden?openPal():closePal()}});
+
+/* ---------- native module contract (team-built screens) ----------
+   A module file /modules/<name>.js calls:
+     LoustaHub.register({id:'<name>', title:'…', render(el, api){ … }})
+   api.get(url)      -> GET a 127.0.0.1 service through the hub (read-only) -> {ok,status,data}
+   api.health()      -> latest service health list
+   api.every(ms,fn)  -> polling that stops when the screen closes
+   api.ask(text)     -> puts text in the chat box for Louie to send (never sends)
+   api.el(tag,cls,text) -> safe element helper (text, not HTML)
+   Modules never fetch directly, never POST, never touch 11884. */
+const registry={},timers=[];let nativeEl=null;
+window.LoustaHub=Object.freeze({version:'HUB_MODULE_V1',register(def){
+  if(!def||!/^[a-z0-9_]{1,40}$/.test(def.id)||typeof def.render!=='function')return console.warn('LoustaHub: bad module',def);
+  registry[def.id]=def;window.dispatchEvent(new CustomEvent('lousta:module',{detail:def.id}))}});
+const api=Object.freeze({
+  async get(url){try{const r=await fetch('/hub/get?u='+encodeURIComponent(url),{cache:'no-store'});const raw=await r.text();
+    let data=raw;try{data=JSON.parse(raw)}catch(_){}return {ok:r.ok,status:r.status,data}}catch(e){return {ok:false,status:0,data:null}}},
+  health:()=>Object.values(health),
+  every(ms,fn){const t=setInterval(fn,Math.max(1000,ms|0));timers.push(t);return t},
+  ask(text){go('chat');input.value=String(text||'');grow();input.focus()},
+  el:(t,c,s)=>txt(t,c,s==null?'':String(s))});
+function stopNative(){while(timers.length)clearInterval(timers.pop());if(nativeEl){nativeEl.remove();nativeEl=null}}
+function loadScript(name){return new Promise((ok,bad)=>{if(registry[name])return ok();
+  const s=document.createElement('script');s.src='/modules/'+name+'.js';s.onload=()=>ok();s.onerror=()=>bad();document.head.appendChild(s)})}
+async function openNative(m,show){
+  const box=el('div','native on');$('#frames').appendChild(box);nativeEl=box;
+  try{await loadScript(m.native)}catch(e){box.remove();nativeEl=null;return show(m.label+' module missing','modules/'+m.native+'.js was not found. Promote it with PROMOTE_MODULE.sh.',false)}
+  const def=registry[m.native];if(!def){box.remove();nativeEl=null;return show('Module did not register',m.native+'.js loaded but never called LoustaHub.register.',false)}
+  try{def.render(box,api)}catch(e){box.textContent='';box.append(txt('h3','',m.label+' crashed'),txt('pre','',String(e&&e.message||e)))}
+}
+
+/* ---------- Build: the team's work orders ---------- */
+let wos=null;
+/* work-order progress lives on this phone (work_orders.json stays the plan) */
+let woSt={};try{woSt=JSON.parse(recall('lousta.wo')||'{}')}catch(e){woSt={}}
+const stOf=o=>woSt[o.id]||o.status;
+function setSt(id,st){woSt[id]=st;store('lousta.wo',JSON.stringify(woSt))}
+let hubDir=null;
+async function getHubDir(){if(hubDir)return hubDir;try{hubDir=(await (await fetch('/hub/status')).json()).dir}catch(e){}return hubDir||'~/publishing-empire/bluebot_11082'}
+/* attach REAL data samples so BlueBot never guesses keys */
+async function enrich(o){
+  let extra='';
+  for(const src of (o.samples||[])){
+    const url=src.startsWith('cfg:')?src.slice(4).split('.').reduce((a,k)=>a&&a[k],cfg):src;
+    if(!url){extra+='\n- '+src+': NOT CONFIGURED YET (run lousta_connect.py)';continue}
+    const r=await api.get(url);
+    const body=r.data==null?'':(typeof r.data==='string'?r.data:JSON.stringify(r.data,null,1));
+    extra+='\n- GET '+url+' -> HTTP '+(r.status||'000')+(body?'\n```json\n'+body.slice(0,1500)+(body.length>1500?'\n…(trimmed)':'')+'\n```':' (no answer)');
+  }
+  const ctx='\n\nLIVE CONTEXT FROM LOUSTA HUB 11082 (real, just fetched)\n'+
+    '- Services up: '+Object.values(health).filter(h=>h.state==='UP').map(h=>h.role+':'+h.port).join(', ')+
+    '\n- Chat field: '+((cfg.chat&&cfg.chat.message_key)||'message')+' · Termux readback: '+((cfg.termux&&cfg.termux.readback_url)||'not configured')+
+    (o.module?'\n- Name the module EXACTLY "'+o.module+'" (file '+o.module+'.js). Reply with ONE ```js code block containing the whole file.':'')+
+    (extra?'\n\nREAL DATA SAMPLES (use only keys you see here):'+extra:'');
+  let facts='';try{facts=await (await fetch('/hub/truth.txt',{cache:'no-store'})).text()}catch(e){}
+  return o.brief+ctx+(facts?'\n\n'+facts:'')}
+async function renderBuild(){
+  if(!wos){try{wos=await (await fetch('/work_orders.json',{cache:'no-store'})).json()}catch(e){wos={orders:[]}}}
+  const list=$('#woList');list.textContent='';const os=wos.orders||[];
+  const done=os.filter(o=>stOf(o)==='DONE').length;
+  const p=$('#buildProg');p.textContent='';const bar=el('div','bar','<i></i>');bar.style.flex='1';bar.firstChild.style.width=(os.length?done/os.length*100:0)+'%';
+  p.append(txt('span','',done+' of '+os.length+' done'),bar);if(!run)renderRunPick();
+  $('#woCount').textContent=os.filter(o=>stOf(o)==='READY'&&o.who!=='OWNER').length+' ready';
+  os.forEach(o=>{
+    const st=stOf(o);const c=el('div','card wo');const row=el('div','row');
+    row.append(txt('span','id',o.id),txt('span','pill '+(st||''),(st||'').replace('_',' ')),txt('span','pill',o.who||'TEAM'));
+    if(o.module)row.append(txt('span','pill',o.module+'.js'));
+    c.append(row,txt('div','t',o.title),txt('p','',o.summary||''));
+    if(o.depends&&o.depends.length)c.append(txt('p','','After: '+o.depends.join(', ')));
+    const d=el('details');d.append(txt('summary','','Full brief'),txt('pre','',o.brief||''));c.append(d);
+    const a=el('div','acts');
+    if(o.who!=='OWNER'&&st!=='DONE'){const b=txt('button','btn pri','Hand to BlueBot');b.onclick=async()=>{b.textContent='Gathering real data…';const t=await enrich(o);setSt(o.id,'IN_PROGRESS');api.ask(t)};a.append(b)}
+    if(st!=='DONE'){const m=txt('button','btn','Mark done');m.onclick=()=>{setSt(o.id,'DONE');renderBuild()};a.append(m)}
+    else{const u=txt('button','btn','Reopen');u.onclick=()=>{setSt(o.id,o.status);renderBuild()};a.append(u)}
+    c.append(a);list.appendChild(c)});
+}
+
+/* ---------- Code: Termux script loop with error-correcting agent ----------
+   Writes scripts and corrections through the same chat route. It never runs anything:
+   Louie copies the script into Termux. Output comes back by paste or read-only pull (11883). */
+const CG_RULES='RULES: Output exactly ONE ```bash code block for Termux on Android (no root, no sudo, no apt unless asked). '+
+ 'Start with: export PATH="/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets" ; a printf PASTE START banner; echo MUTATION=, EXECUTION=, PRODUCTION=LOCKED lines. '+
+ 'Use heredocs, never nano. Do not use set -e or exit at top level (it closes the interactive shell). Never touch port 11884, tmux send-keys, run-approved, /loukey/auto, or restart services unless the task says so. '+
+ 'End with a printf PASTE END banner and NEXT= line. After the code block write max 3 short lines: what it does, what it changes, rollback.';
+let cg=null;try{cg=JSON.parse(recall('lousta.code')||'null')}catch(e){cg=null}
+const cgSave=()=>store('lousta.code',JSON.stringify(cg));
+function cgInit(){
+  const sel=$('#cgBot');if(!sel.options.length){BOTS().forEach(b=>{const o=txt('option','',(b.icon||'')+' '+b.label);o.value=b.id;sel.append(o)});
+    const pref=BOTS().find(b=>/code|fix/i.test(b.id));if(pref)sel.value=pref.id}
+  if(cg){$('#cgTask').value=cg.task||'';cgDraw()}}
+function extractCode(t){const m=String(t).match(/```(?:bash|sh|shell)?\s*\n([\s\S]*?)```/);return m?m[1].replace(/\n$/,''):null}
+function lint(code){
+  const W=[],X=[];const has=r=>r.test(code);
+  if(has(/\bsudo\b/))X.push('uses sudo (no root in Termux)');
+  if(has(/rm\s+-[a-z]*r[a-z]*f?\s+(\/|~|\$HOME)(\s|$|\/\s)/i))X.push('recursive delete of a home/root path');
+  if(has(/curl[^|\n]*\|\s*(ba)?sh/))X.push('pipes a download into a shell');
+  if(has(/11884|send-keys|run-approved|stage-approved|\/loukey\/auto|\/api\/decision/))X.push('touches the owner-manual input or the gate/execution path');
+  if(has(/^\s*set\s+-e/m))W.push('set -e at top level can close your Termux session on error');
+  if(has(/^\s*exit\b/m))W.push('top-level exit closes the interactive shell');
+  if(has(/\bnano\b|\bvim?\b/))W.push('opens an editor (use heredocs)');
+  if(has(/\b(pkill|killall|kill\s+-9)\b/))W.push('kills processes');
+  if(has(/tmux[^\n]*(new-session|kill-server|kill-session)/))W.push('creates or kills a tmux session');
+  if(has(/\brm\b|\bmv\b|>\s*[^&\s/]|\bsed\s+-i\b|\bcp\b|\bmkdir\b|\bchmod\b|\btee\b/))W.push('changes files');
+  if(has(/\b(nohup|uvicorn|python3?\s+-m\s+http|systemctl|pm2)\b/))W.push('starts or restarts a service');
+  if(!has(/PASTE START/))W.push('no PASTE START banner');
+  if(!has(/PATH=/))W.push('PATH not normalised');
+  const heredocs=[...code.matchAll(/<<-?\s*'?"?([A-Z_]+)'?"?/g)].map(m=>m[1]);
+  heredocs.forEach(h=>{if(!new RegExp('^'+h+'\\s*$','m').test(code))X.push('heredoc '+h+' is never closed')});
+  const q=(code.replace(/\\'/g,'').match(/'/g)||[]).length;if(q%2&&!heredocs.length)W.push('odd number of single quotes');
+  const risk=X.length?'DANGER':W.some(w=>/changes files|kills|starts|tmux/.test(w))?'MUTATES':'READ_ONLY';
+  return {risk,W,X}}
+function errScan(out){const lines=String(out).split('\n');const bad=lines.filter(l=>/(error|traceback|no such file|command not found|permission denied|syntax error|not found|HOLD=|FAIL|exception|refused|denied|cannot)/i.test(l)&&!/=PASS|ERRORS?=0|NO_ERROR/i.test(l));
+  return {bad,pass:/PASS|PASTE END/i.test(out)&&!bad.length}}
+function cgDraw(){
+  const R=$('#cgRounds');R.textContent='';const O=$('#cgOut');O.textContent='';
+  if(!cg||!cg.rounds.length){$('#cgRun').hidden=true;return}
+  cg.rounds.forEach((r,i)=>{const b=txt('button','',(i?'Fix '+i:'v1')+(r.code?'':' · no code'));b.setAttribute('aria-current',String(i===cg.cur));b.onclick=()=>{cg.cur=i;cgSave();cgDraw()};R.append(b)});
+  const r=cg.rounds[cg.cur];const box=el('div','script');const hd=el('div','hd');
+  const bo=botOf(r.bot)||{};const av=txt('span','av',bo.icon||'•');av.style.cssText='width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;background:'+(bo.color||'var(--a2)');
+  hd.append(av,txt('b','',(cg.cur?'Correction '+cg.cur:'Script v1')+' · '+(bo.label||r.bot)));
+  if(r.code){const L=lint(r.code);hd.append(txt('span','risk '+L.risk,L.risk.replace('_',' ')),txt('span','errc',r.code.split('\n').length+' lines'));
+    const sp=el('span');sp.style.flex='1';hd.append(sp);const c=txt('button','btn pri','Copy for Termux');c.onclick=()=>{copy(r.code,null);c.textContent='Copied ✓';setTimeout(()=>c.textContent='Copy for Termux',1500)};hd.append(c);box.append(hd);
+    if(r.diag)box.append(txt('div','diag',r.diag));
+    if(L.X.length||L.W.length){const w=el('div','warns');L.X.forEach(x=>w.append(txt('span','x','⛔ '+x)));L.W.forEach(x=>w.append(txt('span','w','⚠ '+x)));box.append(w)}
+    box.append(txt('pre','',r.code))}
+  else{box.append(hd);box.append(md(r.reply||''))}
+  O.append(box);
+  $('#cgRun').hidden=!r.code;$('#cgOutput').value=r.output||'';cgErrShow()}
+function cgErrShow(){const out=$('#cgOutput').value;if(!out.trim()){$('#cgErrc').textContent='';return}const e=errScan(out);
+  $('#cgErrc').textContent='';if(e.bad.length){$('#cgErrc').append(txt('b','',e.bad.length+' error line'+(e.bad.length>1?'s':'')))}else $('#cgErrc').textContent=e.pass?'looks successful':'no errors spotted'}
+$('#cgOutput').addEventListener('input',()=>{if(cg){cg.rounds[cg.cur].output=$('#cgOutput').value;cgSave()}cgErrShow()});
+async function cgAsk(content,botId){
+  try{const f=await (await fetch('/hub/truth.txt',{cache:'no-store'})).text();if(f)content+='\n\n'+f}catch(e){}
+  const b=BOTS().find(x=>x.id===botId)||bot();const key=(cfg.chat&&cfg.chat.message_key)||'message';
+  const {code,j}=await postChat({[key]:(b.prefix||'')+content,conversation_id:cg.id,trace_id:uid('tr'),source:'hub_11082_code',bot:b.id});
+  const reply=code>=200&&code<300?pickReply(j):null;return {reply,code}}
+function cgBusy(v,label){['#cgGen','#cgFix'].forEach(x=>$(x).disabled=v);$('#cgGen').textContent=v&&label==='gen'?'Writing…':'Write script';$('#cgFix').textContent=v&&label==='fix'?'Fixing…':'Fix & next input'}
+$('#cgGen').onclick=async()=>{
+  const task=$('#cgTask').value.trim();if(!task)return $('#cgTask').focus();
+  cg={id:uid('code'),task,ro:$('#cgRO').checked,rounds:[],cur:0};cgBusy(true,'gen');
+  const prompt='[LOUCODE · TERMUX SCRIPT REQUEST]\nTask: '+task+'\nMode: '+(cg.ro?'READ-ONLY (inspect only, change nothing)':'may change files if the task needs it; say exactly what changes')+'\n'+CG_RULES;
+  const botId=$('#cgBot').value;const {reply,code}=await cgAsk(prompt,botId);cgBusy(false);
+  cg.rounds.push({bot:botId,reply:reply||('No reply (HTTP '+code+')'),code:reply?extractCode(reply):null,diag:reply?reply.replace(/```[\s\S]*?```/g,'').trim().slice(0,400):''});cg.cur=0;cgSave();cgDraw()};
+$('#cgFix').onclick=async()=>{
+  if(!cg)return;const r=cg.rounds[cg.cur];const out=$('#cgOutput').value.trim();if(!out)return $('#cgOutput').focus();
+  if(cg.rounds.length>=8){$('#cgErrc').textContent='8 rounds reached. Rethink the task or ask in Chat.';return}
+  cgBusy(true,'fix');const tail=out.split('\n').slice(-120).join('\n');
+  const prompt='[LOUCODE · ERROR CORRECTION round '+cg.rounds.length+']\nOriginal task: '+cg.task+'\nMode: '+(cg.ro?'READ-ONLY':'may change files')+
+    '\nScript that was run:\n```bash\n'+r.code+'\n```\nTermux output (last 120 lines):\n```\n'+tail+'\n```\n'+
+    'First write 2-3 lines: ROOT CAUSE and what you changed. If the output shows the task fully succeeded, write DONE and give the next logical step as a new script. Then '+CG_RULES;
+  const botId=$('#cgBot').value;const {reply,code}=await cgAsk(prompt,botId);cgBusy(false);
+  cg.rounds.push({bot:botId,reply:reply||('No reply (HTTP '+code+')'),code:reply?extractCode(reply):null,diag:reply?reply.replace(/```[\s\S]*?```/g,'').trim().slice(0,400):''});
+  cg.cur=cg.rounds.length-1;cgSave();cgDraw()};
+/* pull output: read-only snapshot of pane %0, trimmed to this script's PASTE START..END if present */
+let cgWatch=null;
+async function cgPullOnce(){const T=cfg.termux||{};if(!T.readback_url){$('#cgErrc').textContent='Live Termux not connected yet. Paste the output, or set termux.readback_url (census).';return null}
+  const r=await api.get(T.readback_url);const h=r.ok&&r.data&&typeof r.data==='object'?(r.data[T.history_key]||r.data[T.screen_key]):null;if(typeof h!=='string')return null;
+  const i=h.lastIndexOf('PASTE START');const seg=i>=0?h.slice(h.lastIndexOf('\n',i)+1):h.split('\n').slice(-150).join('\n');return seg}
+$('#cgPull').onclick=async()=>{const seg=await cgPullOnce();if(seg!=null){$('#cgOutput').value=seg;$('#cgOutput').dispatchEvent(new Event('input'))}};
+$('#cgAuto').onchange=e=>{clearInterval(cgWatch);cgWatch=null;if(!e.target.checked)return;
+  cgWatch=setInterval(async()=>{if(tab!=='code'||!cg)return;const seg=await cgPullOnce();if(!seg)return;
+    const r=cg.rounds[cg.cur];if(/PASTE END/.test(seg)&&seg!==r.output){$('#cgOutput').value=seg;$('#cgOutput').dispatchEvent(new Event('input'));
+      if(!errScan(seg).pass)$('#cgFix').click();else{$('#cgErrc').textContent='Looks successful. Auto-fix paused.';e.target.checked=false;clearInterval(cgWatch)}}},4000)};
+
+/* ---------- auto-build run: sends chosen briefs one at a time, owner watching ----------
+   Same single chat route; replies are drafts. Stops on first failure or on Stop. Max 5 per run. */
+let run=null;
+function renderRunPick(){
+  const P=$('#runPick');P.textContent='';const os=(wos&&wos.orders||[]).filter(o=>stOf(o)==='READY'&&o.who!=='OWNER');
+  const sel=el('select');sel.id='runBot';sel.className='mini';sel.style.height='36px';
+  BOTS().forEach(b=>{const o=txt('option','',b.label);o.value=b.id;sel.append(o)});
+  sel.value=BOTS()[0].id;
+  const lab=el('label','chk');lab.append(txt('span','','Bot'),sel);P.append(lab);
+  os.forEach(o=>{const l=el('label','chk');const c=el('input');c.type='checkbox';c.value=o.id;l.append(c,txt('span','',o.id+' · '+o.title));P.append(l)});
+  if(!os.length)P.append(txt('p','sub','No READY work orders.'))}
+function logRun(icon,t){const r=el('div','r');r.append(txt('span','',icon),txt('span','',t));$('#runLog').append(r)}
+function nextBatch(){const os=(wos&&wos.orders)||[];const ok=id=>{const d=os.find(x=>x.id===id);return d&&['DONE','REVIEW','IN_PROGRESS'].includes(stOf(d))};
+  return os.filter(o=>o.who!=='OWNER'&&stOf(o)==='READY'&&(o.depends||[]).filter(x=>x!=='WO-00').every(ok)).slice(0,5).map(o=>o.id)}
+$('#buildRest').onclick=()=>{if(run)return;const ids=nextBatch();if(!ids.length)return logRun('•','Nothing ready: finish or mark the earlier orders (e.g. WO-01) first, or everything is done.');startRun(ids)};
+$('#runStart').onclick=()=>{if(run)return;const ids=$$('#runPick input:checked').map(c=>c.value).slice(0,5);if(!ids.length)return logRun('•','Tick at least one work order.');startRun(ids)};
+async function startRun(ids){
+  const botId=$('#runBot').value;run={stop:false,ctrl:null};$('#runStart').disabled=$('#buildRest').disabled=true;$('#runStop').disabled=false;$('#runLog').textContent='';
+  newConv(botId);conv.title='Auto-build '+new Date().toLocaleTimeString();$('#runState').textContent='running';
+  for(const id of ids){
+    if(run.stop)break;const o=wos.orders.find(x=>x.id===id);logRun('⏳',id+' · '+o.title+' → '+(BOTS().find(b=>b.id===botId)||{}).label);
+    setSt(id,'IN_PROGRESS');const brief=await enrich(o);
+    run.ctrl=new AbortController();const r=await ask(brief,{bot:botId,signal:run.ctrl.signal});
+    $('#runLog').lastChild.firstChild.textContent=r.ok?'✅':'⛔';if(r.ok)setSt(id,'REVIEW');else setSt(id,'READY');
+    if(!r.ok){logRun('■','Stopped: '+id+' did not get a usable reply ('+(r.code===-1?'stopped':'HTTP '+r.code)+').');break}
+    await new Promise(z=>setTimeout(z,2500))}
+  logRun('📄','Replies are in the chat "'+conv.title+'". Each module reply has Check · Save .js · Copy promote. Promote what passes, then Mark done.');
+  $('#runState').textContent='idle';$('#runStart').disabled=$('#buildRest').disabled=false;$('#runStop').disabled=true;run=null;renderBuild()}
+$('#runStop').onclick=()=>{if(run){run.stop=true;if(run.ctrl)run.ctrl.abort()}};
+
+/* ---------- boot ---------- */
+(async()=>{
+  try{cfg=await (await fetch('/modules.json',{cache:'no-store'})).json();cfg.modules=(cfg.modules||[]).filter(m=>m&&m.id&&(m.url||m.native||m.status==='PLANNED'))}catch(e){}
+  renderMore();conv=convs[0]||null;if(!conv)newConv();renderConv();go('chat');await refresh();setInterval(refresh,15000);
+})();
+})();
+</script>
+</body>
+</html>

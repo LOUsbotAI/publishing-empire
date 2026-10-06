@@ -1,0 +1,28 @@
+{
+ "_note": "Canonical files and their SHA256 from LOUSTA_BLUEBOT_CANONICAL_MANIFEST_20261004. Paths are relative to ~/bluebits/empire_director_v1. The hub reports MATCH / DRIFT / MISSING; it never changes these files. 'watch' files have no pinned hash: their current hash is shown so drift is visible.",
+ "root": "~/bluebits/empire_director_v1",
+ "pinned": [
+  {"name": "Guided director (BlueBot ingress)", "path": "lousta_workflow_v2/guided_director.py", "sha256": "dbfa9a87a621aac81f117bf43cc73878b949b6337eda9e6a8f22655cd04a97bb"},
+  {"name": "Front-door swarm adapter", "path": "supervised_dev/frontdoor_swarm_adapter_backbone_compat_v1/frontdoor_swarm_adapter_backbone_compat_v1.py", "sha256": "6fb1e7fa581d8eccab1f328791b7169cba81cdf3cd92be316c6314e950f5666f"},
+  {"name": "Workbench app.py (verified)", "path": "supervised_dev/1182_bluebot_chat_installation_ready_v1/BLUEBOT_CHAT_INSTALLATION_READY_V1_20260926T020840Z/workbench/app.py", "sha256": "7d3067e89af4a9e52e94de55bd0d25d8f3e522cb1c79868743ab7199c08868ed"},
+  {"name": "Bounded work-queue controller", "path": "brain_hub_v1/data/autopilot_control/loubot_bounded_work_queue_controller.py", "sha256": "9048036a171cbe1e2a7eb74b41d635ab3e6f61c98a9f609ebfe2b85547d6807a"},
+  {"name": "Visible Supervisor V2", "path": "brain_hub_v1/data/autopilot_control/bluebot_auto_supervisor.py", "sha256": "67933d6a0f288664472c748e92f9b64a2ac8b10867a1223742038458e316062b"},
+  {"name": "LouKey stager", "path": "loukey_v1/bin/loukey_stage_bundle.py", "sha256": "a7f425231517e71f2ab2934035ca6c0b5662e203e8d2bae7ba437ed4a7daaacb"},
+  {"name": "LouKey real auto runner", "path": "loukey_v1/loukey_real_auto_runner.py", "sha256": "6345a26302aee7a9612646ab1613ea3e31b713b305b4fb1d82ddc4cff1d7a610"},
+  {"name": "ApprovalPad server (live)", "path": "approvalpad_v1/approvalpad_server.py", "sha256": "83c976c80ac0bfdf04f36fec72bbc5bc9683fe8adc0d0a8a7fd5095ecf85052e"},
+  {"name": "ApprovalPad stage-binding candidate", "path": "supervised_dev/approvalpad_loukey_live_binding_v1/approvalpad_server.loukey_stage_binding_candidate.py", "sha256": "ab94663a2a9e60e047f17e5bdb268f1091cec2406d752e0b977fc322bd391cb8"},
+  {"name": "Owner Gate -> LouKey stage join", "path": "supervised_dev/approvalpad_loukey_stage_join_v1/approvalpad_loukey_stage_join_v1.py", "sha256": "8af0ddf194015afa877a10110d0d06095896bf40759261593a4ed8ec3e2c74d1"},
+  {"name": "Department registry", "path": "brain_hub_v1/data/organization_v1/departments/department_registry.json", "sha256": "81da1e604fc534c9e080ac47bbeb1af7a157bff60462c4b66aabfece6a4edaa8"},
+  {"name": "Capability registry", "path": "brain_hub_v1/data/organization_v1/capabilities/capability_registry.json", "sha256": "7bb31d899577b96bf17e0cdb9193b63ff38351614e7594c101f7fe44c9fe0fb3"},
+  {"name": "BR37N2 cycle script", "path": "brain_hub_v1/data/autopilot_control/cycles/approved/013_BR37N2_HOLD_STOP_CHECKPOINT_RESUME.sh", "sha256": "09df6c8ef80cb921dfda82f814c68c2e00624eddd437c4fc6bdfe013313c68bc"},
+  {"name": "Front-door live receipt", "path": "receipts/BLUEBOT_DEPARTMENT_FRONTDOOR_V1/BLUEBOT_DEPARTMENT_FRONTDOOR_LIVE_PASS_20261004_153155.md", "sha256": "b7903a1e08360e6f2c3f8ccad10dec09f4294c5d2defec12254b9a8fa23497b0"},
+  {"name": "Supervisor V2 qualification receipt", "path": "supervised_dev/bluebot_supervisor_visible_execution_v2/BLUEBOT_VISIBLE_SUPERVISOR_V2_QUALIFICATION_PASS.txt", "sha256": "8a8f7521c1653f17b265886856e3b7525b8c28f55e5c1359b64ad427d7f44cfe"},
+  {"name": "Supervisor V2 live-promotion receipt", "path": "supervised_dev/bluebot_supervisor_visible_execution_v2/live_promotion_v2/BLUEBOT_VISIBLE_SUPERVISOR_V2_LIVE_PROMOTION_PASS.txt", "sha256": "266e6c259abb12285a100a14a250695d48f7533aed8036d4c6d0539dcc10def4"},
+  {"name": "Stage-join qualification receipt", "path": "supervised_dev/approvalpad_loukey_stage_join_v1/OWNER_GATE_LOUKEY_STAGE_JOIN_QUALIFICATION_PASS_V1.txt", "sha256": "c2a26319a61a03bf3c2ee7ed0ee71ef863000c7a8e47304780ab2d56dfda40e2"}
+ ],
+ "watch": [
+  {"name": "Workbench app_trainee.py (what 11880 actually runs)", "path": "supervised_dev/1182_bluebot_chat_installation_ready_v1/BLUEBOT_CHAT_INSTALLATION_READY_V1_20260926T020840Z/workbench/app_trainee.py"},
+  {"name": "Qwen adapter (reasoner)", "path": "supervised_dev/1182_bluebot_chat_installation_ready_v1/BLUEBOT_CHAT_INSTALLATION_READY_V1_20260926T020840Z/reasoner/local_qwen_openai_adapter.py"},
+  {"name": "Autopilot queue", "path": "brain_hub_v1/data/autopilot_control/queue.json"}
+ ]
+}
