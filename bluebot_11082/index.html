@@ -396,7 +396,11 @@ body.viewing .nav{display:none}
 </section>
 <section class="sheet" id="statusSheet" role="dialog" aria-modal="true" aria-labelledby="stTitle" aria-hidden="true">
   <div class="grab"></div>
-  <div class="sec" style="margin-top:0"><h2 id="stTitle">System</h2><button class="chip" id="stRefresh">Refresh</button></div>
+  <div class="sec" style="margin-top:0"><h2 id="stTitle">System · Truth</h2><span><button class="chip" id="truthCopy">Copy truth report</button> <button class="chip" id="stRefresh">Refresh</button></span></div>
+  <p class="sub" style="font-size:12.5px;margin:0 0 6px" id="truthWhen">Termux is the source of truth. Read from the phone, never changed.</p>
+  <div id="truthChecks"></div>
+  <details id="truthMore" style="margin:8px 0"><summary class="sub" style="cursor:pointer">Canonical files, processes, autopilot</summary><div id="truthDetail"></div></details>
+  <div class="sec"><h2>Services</h2></div>
   <div id="svcList"></div>
   <div class="sec"><h2>Voice</h2><button class="chip" id="voiceCheckBtn">Voice check</button></div>
   <div id="voiceList"></div>
@@ -497,9 +501,26 @@ async function refresh(){
   const L=$('#svcList');L.textContent='';
   d.services.forEach(s=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',s.role),txt('small','',':'+s.port));
     r.append(el('span','dot '+s.state),mid,txt('code','',s.code?('HTTP '+s.code+' · '+s.ms+'ms'):s.state));L.appendChild(r)});
-  renderBento(d.services);paintDots();
+  renderBento(d.services);paintDots();refreshTruth();
 }
-$('#stRefresh').onclick=refresh;
+$('#stRefresh').onclick=()=>{refresh();refreshTruth()};
+let truthData=null;
+async function refreshTruth(){let t;try{t=await (await fetch('/hub/truth',{cache:'no-store'})).json()}catch(e){return}
+  truthData=t;const C=$('#truthChecks');C.textContent='';
+  t.checks.forEach(c=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',c.name),txt('small','',c.detail));
+    r.append(el('span','dot '+(c.state==='PASS'?'UP':c.state==='FAIL'?'DOWN':'ERROR')),mid,txt('code','',c.state));C.append(r)});
+  $('#truthWhen').textContent='Termux is the source of truth · read '+new Date(t.ts*1000).toLocaleTimeString()+' · '+t.summary.PASS+' pass, '+t.summary.WARN+' warn, '+t.summary.FAIL+' fail';
+  const D=$('#truthDetail');D.textContent='';
+  const add=(a,b,st)=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',a),txt('small','',b||''));r.append(el('span','dot '+(st||'')),mid,txt('code','',''));D.append(r)};
+  t.files.forEach(f=>add(f.name,f.state+' · '+(f.sha||'—')+(f.state==='DRIFT'?' (expected '+f.expected+')':''),f.state==='MATCH'?'UP':f.state==='DRIFT'?'ERROR':'DOWN'));
+  t.watch.forEach(f=>add(f.name,f.state+' · '+(f.sha||'—'),f.state==='PRESENT'?'UP':'DOWN'));
+  Object.entries(t.processes).forEach(([k,n])=>add('process: '+k,n+' running',n?'UP':''));
+  add('tmux windows',t.tmux.map(w=>w.index+':'+w.name+(w.dead==='1'?'(dead)':'')).join('  ')||'none',t.tmux.length?'UP':'DOWN');
+  add('autopilot',JSON.stringify(t.autopilot.queue_counts)+' · active '+(t.autopilot.active.join(', ')||'none')+' · BR37N2 '+t.autopilot.br37n2+' · lock '+(t.autopilot.global_lock_present?'present':'absent'));
+  add('LouKey inbox','bundle '+JSON.stringify(t.loukey.approved_bundle)+' · error '+(t.loukey.error||'none'));
+  if(t.summary.FAIL){$('#sDot').className='dot DOWN';$('#sText').textContent='⚠ '+t.summary.FAIL+' check'+(t.summary.FAIL>1?'s':'')}}
+$('#truthCopy').onclick=async e=>{try{copy(await (await fetch('/hub/truth.txt',{cache:'no-store'})).text(),e.currentTarget)}catch(_){}};
+$('#statusBtn').addEventListener('click',refreshTruth);
 async function refreshBrains(){let d;try{d=await (await fetch('/hub/brains',{cache:'no-store'})).json()}catch(e){return}
   const L=$('#brainList');L.textContent='';
   $('#brainNote').textContent=d.keys_file_exists?(d.keys_file_private?'keys file private ✓':'⚠ chmod 600 your keys file'):'no keys file yet';
@@ -942,7 +963,8 @@ async function enrich(o){
     '\n- Chat field: '+((cfg.chat&&cfg.chat.message_key)||'message')+' · Termux readback: '+((cfg.termux&&cfg.termux.readback_url)||'not configured')+
     (o.module?'\n- Name the module EXACTLY "'+o.module+'" (file '+o.module+'.js). Reply with ONE ```js code block containing the whole file.':'')+
     (extra?'\n\nREAL DATA SAMPLES (use only keys you see here):'+extra:'');
-  return o.brief+ctx}
+  let facts='';try{facts=await (await fetch('/hub/truth.txt',{cache:'no-store'})).text()}catch(e){}
+  return o.brief+ctx+(facts?'\n\n'+facts:'')}
 async function renderBuild(){
   if(!wos){try{wos=await (await fetch('/work_orders.json',{cache:'no-store'})).json()}catch(e){wos={orders:[]}}}
   const list=$('#woList');list.textContent='';const os=wos.orders||[];
@@ -1019,6 +1041,7 @@ function cgErrShow(){const out=$('#cgOutput').value;if(!out.trim()){$('#cgErrc')
   $('#cgErrc').textContent='';if(e.bad.length){$('#cgErrc').append(txt('b','',e.bad.length+' error line'+(e.bad.length>1?'s':'')))}else $('#cgErrc').textContent=e.pass?'looks successful':'no errors spotted'}
 $('#cgOutput').addEventListener('input',()=>{if(cg){cg.rounds[cg.cur].output=$('#cgOutput').value;cgSave()}cgErrShow()});
 async function cgAsk(content,botId){
+  try{const f=await (await fetch('/hub/truth.txt',{cache:'no-store'})).text();if(f)content+='\n\n'+f}catch(e){}
   const b=BOTS().find(x=>x.id===botId)||bot();const key=(cfg.chat&&cfg.chat.message_key)||'message';
   const {code,j}=await postChat({[key]:(b.prefix||'')+content,conversation_id:cg.id,trace_id:uid('tr'),source:'hub_11082_code',bot:b.id});
   const reply=code>=200&&code<300?pickReply(j):null;return {reply,code}}

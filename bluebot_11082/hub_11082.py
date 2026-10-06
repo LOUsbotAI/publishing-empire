@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import brains
 import voice
+import truth
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -104,6 +105,12 @@ def has_reply(j):
     return has_reply(j.get("data")) if isinstance(j.get("data"), dict) else False
 
 
+def health_list():
+    items = load_config().get("health", [])
+    with ThreadPoolExecutor(max_workers=max(1, len(items))) as ex:
+        return list(ex.map(probe, items))
+
+
 def probe(item):
     url = item.get("url", "")
     out = {"port": item.get("port"), "role": item.get("role"), "url": url}
@@ -154,12 +161,13 @@ class Hub(BaseHTTPRequestHandler):
             with open(os.path.join(HERE, name), "rb") as f:
                 return self.send(200, f.read(), ctype)
         if path == "/hub/health":
-            items = load_config().get("health", [])
-            with ThreadPoolExecutor(max_workers=max(1, len(items))) as ex:
-                results = list(ex.map(probe, items))
             return self.send_json(200, {"version": VERSION, "ts": int(time.time()),
                                         "production": "LOCKED", "execution": "NONE",
-                                        "services": results})
+                                        "services": health_list()})
+        if path == "/hub/truth":
+            return self.send_json(200, truth.snapshot(load_config(), health_list))
+        if path == "/hub/truth.txt":
+            return self.send(200, truth.as_text(truth.snapshot(load_config(), health_list), 6000).encode(), "text/plain; charset=utf-8")
         if path == "/modules.json":
             return self.send_json(200, load_config())
         mm = MODULE_RE.match(path)
@@ -227,6 +235,11 @@ class Hub(BaseHTTPRequestHandler):
         image = body.get(ikey) if ikey else body.get("image")
         bb = cfg.get("brains", {}).get("list", {}).get("bluebot", {})
         why = "skipped (direct brain)"
+        if not direct and cfg.get("truth", {}).get("to_bluebot") and text:
+            try:
+                body[key] = text + "\n\n" + truth.as_text(truth.snapshot(cfg, health_list), 1500)
+            except Exception:
+                pass
         if not direct:
             req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
                                          headers={"Content-Type": "application/json", "User-Agent": VERSION})
@@ -249,7 +262,11 @@ class Hub(BaseHTTPRequestHandler):
                 why = "timeout" if "timed out" in str(e).lower() or type(e).__name__ == "TimeoutError" else type(e).__name__
             if cfg.get("brains", {}).get("fallback") is False:
                 return self.send_json(502, {"error": "BLUEBOT_UNAVAILABLE", "bluebot": why})
-        reply, bid, tried = brains.fallback(cfg, text, history, image, only=direct)
+        try:
+            facts = truth.as_text(truth.snapshot(cfg, health_list))
+        except Exception:
+            facts = ""
+        reply, bid, tried = brains.fallback(cfg, text, history, image, only=direct, context=facts)
         if reply:
             label = cfg["brains"]["list"].get(bid, {}).get("label", bid)
             return self.send_json(200, {"reply": reply, "brain": bid, "route": ("BRAIN · " if direct else "FALLBACK · ") + label,

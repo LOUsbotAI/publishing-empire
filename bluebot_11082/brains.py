@@ -73,7 +73,7 @@ def _auto_model(base, timeout=4):
         return "local"
 
 
-def call_brain(b, keys, text, history, image):
+def call_brain(b, keys, text, history, image, context=""):
     """Returns reply text or raises. b = brain config dict."""
     t = b.get("type")
     timeout = float(b.get("timeout", 60))
@@ -82,6 +82,7 @@ def call_brain(b, keys, text, history, image):
     if b.get("key_env") and not key:
         raise LookupError("no key")
     msgs = _msgs(text, history)
+    system = SYSTEM + ("\n\n" + context if context else "")
     if t == "anthropic":
         if image and image.startswith("data:image/"):
             mt, data = image[5:].split(";base64,", 1)
@@ -89,7 +90,7 @@ def call_brain(b, keys, text, history, image):
                                    {"type": "text", "text": msgs[-1]["content"]}]
         code, d = _post("https://api.anthropic.com/v1/messages",
                         {"model": model or "claude-opus-5-5", "max_tokens": int(b.get("max_tokens", 16000)),
-                         "system": SYSTEM, "messages": msgs},
+                         "system": system, "messages": msgs},
                         {"x-api-key": key, "anthropic-version": "2023-06-01"}, timeout)
         if d.get("stop_reason") == "refusal":
             raise RuntimeError("refused")
@@ -105,7 +106,7 @@ def call_brain(b, keys, text, history, image):
             msgs[-1]["content"] = [{"type": "text", "text": msgs[-1]["content"]}, {"type": "image_url", "image_url": {"url": image}}]
         hdr = {"Authorization": "Bearer " + key} if key else {}
         code, d = _post(base.rstrip("/") + "/chat/completions",
-                        {"model": model, "messages": [{"role": "system", "content": SYSTEM}] + msgs,
+                        {"model": model, "messages": [{"role": "system", "content": system}] + msgs,
                          "max_tokens": int(b.get("max_tokens", 4096)), "temperature": 0.4}, hdr, timeout)
         ch = (d.get("choices") or [{}])[0].get("message", {})
         c = ch.get("content")
@@ -128,7 +129,7 @@ def status(cfg):
             "keys_file_private": os.path.exists(KEYS_FILE) and not load_keys().get("__insecure__"), "brains": out}
 
 
-def fallback(cfg, text, history, image, start_after=None, only=None):
+def fallback(cfg, text, history, image, start_after=None, only=None, context=""):
     """Try brains in order. Returns (reply, brain_id, tried list)."""
     keys = load_keys()
     order = list(cfg.get("brains", {}).get("order", []))
@@ -143,7 +144,7 @@ def fallback(cfg, text, history, image, start_after=None, only=None):
             continue
         t0 = time.monotonic()
         try:
-            reply = call_brain(b, keys, text, history, image)
+            reply = call_brain(b, keys, text, history, image, context)
             if reply:
                 tried.append({"id": bid, "result": "ok", "ms": round((time.monotonic() - t0) * 1000)})
                 return reply, bid, tried

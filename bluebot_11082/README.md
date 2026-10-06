@@ -84,6 +84,34 @@ bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add -
 ```
 Read-only. The only thing it sends is two tiny "Reply with exactly: OK" prompts to the local model on 127.0.0.1. It ends with a PASS/DOWN summary and copies the report to Downloads.
 
+## Termux is the source of truth
+The hub reads the phone every ~10 s and **never changes it**. It reads:
+- services (GET) and tmux windows
+- key processes (llama, Qwen adapter, BlueBot, LouKey runner, controller, supervisor)
+- BlueBot's `/api/status`
+- autopilot state and queue, including **BR37N2**
+- the LouKey inbox (approved bundle, last error)
+- the execution lock and free memory
+- the **canonical file hashes** from `truth_manifest.json`, taken from the 10-04 manifest: MATCH / DRIFT / MISSING
+
+It turns these into checks:
+- Production locked
+- At most one execution
+- Lock held while running
+- BR37N2 preserved
+- BlueBot reasoner up
+- Canonical files match
+- No dead tmux windows
+- No recent LouKey error
+- Enough memory
+
+Where you see it:
+- **System → Truth** shows every check. The status pill turns **red with the number of failures**.
+- **Copy truth report** gives you plain text to paste anywhere, for example to Claude.
+- **Every backup brain**, every **work-order brief** and every **Code-tab request** gets these live facts, so answers fit Termux (no `systemctl`, `sudo` or `apt-get`).
+- `"truth": {"to_bluebot": true}` also appends the facts to messages sent to BlueBot.
+- Endpoints: `GET /hub/truth` (JSON), `GET /hub/truth.txt` (text).
+
 ## Voice in any browser
 Chrome has built-in speech recognition. Edge, Samsung Internet and others often don't, or fail with "network". In those browsers the mic and Talk buttons **record** instead: the hub's `POST /hub/transcribe` takes the audio and returns text only, without storing anything. It tries these in order:
 1. local **whisper.cpp** (private, free): needs `ffmpeg`, `whisper-cli` and a model at `~/.lousta/whisper/ggml-base.bin`

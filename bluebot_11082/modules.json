@@ -623,5 +623,9 @@
    "whisper": "whisper-cli",
    "model": "~/.lousta/whisper/ggml-base.bin"
   }
+ },
+ "truth": {
+  "_note": "Termux is the source of truth. The hub reads it (never changes it) every ~10 s: services, tmux, processes, BlueBot status, autopilot/BR37N2, LouKey inbox, lock, memory, and canonical file hashes from truth_manifest.json. Backup brains always get these facts. Set to_bluebot=true to also append them to messages sent to BlueBot.",
+  "to_bluebot": false
  }
 }

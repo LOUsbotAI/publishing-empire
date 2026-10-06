@@ -8,7 +8,7 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$HOME/bluebits/empire_director_v1"
 DEST="$ROOT/supervised_dev/hub_11082_v1/CANDIDATE_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$DEST" || { echo "HOLD=CANNOT_CREATE_DEST"; exit 1; }
-cp "$SRC/hub_11082.py" "$SRC/brains.py" "$SRC/voice.py" "$SRC/keys.env.example" "$SRC/index.html" "$SRC/modules.json" "$SRC/work_orders.json" "$SRC/START_11082.sh" "$SRC/PROMOTE_MODULE.sh" "$SRC/BUILD_CHARTER.md" "$DEST/" || { echo "HOLD=COPY_FAILED"; exit 1; }
+cp "$SRC/hub_11082.py" "$SRC/brains.py" "$SRC/voice.py" "$SRC/truth.py" "$SRC/truth_manifest.json" "$SRC/keys.env.example" "$SRC/index.html" "$SRC/modules.json" "$SRC/work_orders.json" "$SRC/START_11082.sh" "$SRC/PROMOTE_MODULE.sh" "$SRC/BUILD_CHARTER.md" "$DEST/" || { echo "HOLD=COPY_FAILED"; exit 1; }
 mkdir -p "$DEST/modules" "$DEST/tools" && cp "$SRC/modules/"*.js "$DEST/modules/" && cp "$SRC/tools/check_module.py" "$DEST/tools/" || { echo "HOLD=COPY_FAILED"; exit 1; }
 mkdir -p "$ROOT/supervised_dev/hub_modules"
 chmod +x "$DEST/START_11082.sh" "$DEST/PROMOTE_MODULE.sh"
@@ -30,7 +30,7 @@ W=$(grep -oE "method:'(POST|PUT|PATCH|DELETE)'" "$DEST/index.html" | grep -c . )
 C=$(grep -oE "fetch\('/hub/(chat|transcribe)',\{method:'POST'" "$DEST/index.html" | grep -c . )
 if [ "$W" != "$C" ] || [ "$C" != "2" ]; then echo "HOLD=UNEXPECTED_BROWSER_WRITE ($W writes, $C allowed)"; exit 1; fi
 echo "NO_EXECUTION_PATH=PASS"
-( cd "$DEST" && sha256sum hub_11082.py brains.py voice.py index.html modules.json work_orders.json START_11082.sh PROMOTE_MODULE.sh tools/check_module.py modules/*.js > SHA256SUMS.txt && cat SHA256SUMS.txt )
+( cd "$DEST" && sha256sum hub_11082.py brains.py voice.py truth.py truth_manifest.json index.html modules.json work_orders.json START_11082.sh PROMOTE_MODULE.sh tools/check_module.py modules/*.js > SHA256SUMS.txt && cat SHA256SUMS.txt )
 C=$(curl -s -o /dev/null --max-time 2 -w '%{http_code}' http://127.0.0.1:11082/ 2>/dev/null || true)
 [ "${C:-000}" = "000" ] && echo "PORT_11082=FREE" || echo "PORT_11082=IN_USE_HTTP_$C (check what owns it before starting)"
 if [ -f "$HOME/.lousta/keys.env" ]; then chmod 600 "$HOME/.lousta/keys.env"; echo "KEYS_FILE=present (private)"; else echo "KEYS_FILE=none (optional: mkdir -p ~/.lousta && cp \"$DEST/keys.env.example\" ~/.lousta/keys.env && chmod 600 ~/.lousta/keys.env)"; fi
