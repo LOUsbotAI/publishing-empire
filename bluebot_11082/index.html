@@ -398,6 +398,8 @@ body.viewing .nav{display:none}
   <div class="grab"></div>
   <div class="sec" style="margin-top:0"><h2 id="stTitle">System</h2><button class="chip" id="stRefresh">Refresh</button></div>
   <div id="svcList"></div>
+  <div class="sec"><h2>Voice</h2><button class="chip" id="voiceCheckBtn">Voice check</button></div>
+  <div id="voiceList"></div>
   <div class="sec"><h2>Brains</h2><span id="brainNote"></span></div>
   <div id="brainList"></div>
   <div class="locks"><span>PRODUCTION=LOCKED</span><span>SELF_APPROVAL=NO</span><span>MAX_EXECUTING=1</span><span>BRAIN=SUGGEST_ONLY</span><span>HUB=VIEW+CHAT_ONLY</span><span>BRAINS=CHAT_ONLY_NO_TOOLS</span><span>TERMUX_INPUT=OWNER_MANUAL</span></div>
@@ -506,6 +508,7 @@ async function refreshBrains(){let d;try{d=await (await fetch('/hub/brains',{cac
     mid.append(txt('b','',(i+1)+'. '+b.label),txt('small','',b.local?'local':(b.ready?'key set'+(b.model?' · '+b.model:''):'needs '+b.needs)));
     r.append(el('span','dot '+st),mid,txt('code','',b.local?(h&&h.code?'HTTP '+h.code:st):(b.ready?'ready':'—')));L.append(r)})}
 $('#statusBtn').addEventListener('click',refreshBrains);
+$('#voiceCheckBtn').onclick=voiceCheck;
 
 /* ---------- sheet ---------- */
 function openSheetEl(sel,from){closeSheet(true);opener=from||document.activeElement;$('#scrim').classList.add('on');const s=$(sel);s.classList.add('on');s.setAttribute('aria-hidden','false');
@@ -731,12 +734,54 @@ $('#chatsBtn').onclick=e=>{renderConvList();openSheetEl('#chatsSheet',e.currentT
 $('#newChat').onclick=()=>{newConv();closeSheet();input.focus()};
 
 /* voice dictation: fills the box, never sends */
+/* ---------- voice: works in any browser ----------
+   native : the browser's own speech recognition (Chrome)
+   record : record with the mic, the hub turns it into text (/hub/transcribe: local whisper, Groq or OpenAI)
+   If native fails (Edge/Samsung often report "network" or "not-allowed by service"), it switches to record. */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
-$('#micBtn').hidden=!SR;
-$('#micBtn').onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.interimResults=true;rec.continuous=false;rec.lang=navigator.language||'en-AU';
+const CAN_REC=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+let voiceMode=(()=>{try{return localStorage.getItem('lousta.voice')}catch(e){return null}})()||(SR?'native':(CAN_REC?'record':'none'));
+function setVoiceMode(m){voiceMode=m;store('lousta.voice',m)}
+$('#micBtn').hidden=$('#talkBtn').hidden=!(SR||CAN_REC);
+let recState=null;
+/* record one utterance. silence:true stops ~1.4s after you stop talking. Returns a Blob (or null). */
+async function recordOnce(opts){
+  opts=opts||{};const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  const types=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];const type=types.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||'';
+  const mr=new MediaRecorder(stream,type?{mimeType:type}:undefined);const chunks=[];mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  let ac=null,raf=0,spoke=false,quietSince=0;
+  const done=new Promise(res=>{mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());cancelAnimationFrame(raf);if(ac)ac.close().catch(()=>{});
+    res(chunks.length&&spoke!==false?new Blob(chunks,{type:mr.mimeType||type||'audio/webm'}):(chunks.length?new Blob(chunks,{type:mr.mimeType||'audio/webm'}):null))}});
+  if(opts.silence){try{ac=new (window.AudioContext||window.webkitAudioContext)();const an=ac.createAnalyser();an.fftSize=1024;ac.createMediaStreamSource(stream).connect(an);
+    const buf=new Uint8Array(an.fftSize);const t0=performance.now();spoke=false;
+    const tick=()=>{an.getByteTimeDomainData(buf);let s=0;for(const v of buf){const d=(v-128)/128;s+=d*d}const rms=Math.sqrt(s/buf.length),now=performance.now();
+      if(rms>0.045){spoke=true;quietSince=now}
+      if(spoke&&now-quietSince>1400&&mr.state==='recording')mr.stop();
+      if(!spoke&&now-t0>8000&&mr.state==='recording'){spoke=false;mr.stop()}
+      if(mr.state==='recording')raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}catch(e){}}
+  mr.start(250);recState={stop:()=>{if(mr.state==='recording')mr.stop()}};
+  setTimeout(()=>{if(mr.state==='recording')mr.stop()},opts.maxMs||30000);
+  const blob=await done;recState=null;return opts.silence&&!spoke?null:blob}
+async function transcribeBlob(blob){
+  const r=await fetch('/hub/transcribe',{method:'POST',headers:{'Content-Type':blob.type||'audio/webm'},body:blob});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.tried?j.tried.map(t=>t.id+' '+t.result).join(', '):('HTTP '+r.status));return (j.text||'').trim()}
+function micUi(on){$('#micBtn').classList.toggle('rec',on);$('#micBtn').setAttribute('aria-pressed',String(on))}
+async function dictateRecord(){
+  if(recState){recState.stop();return}
+  micUi(true);const ph=input.placeholder;input.placeholder='Recording… tap the mic to stop';
+  try{const blob=await recordOnce({maxMs:60000});micUi(false);if(!blob)return;input.placeholder='Turning speech into text…';
+    const t=await transcribeBlob(blob);if(t){input.value=(input.value?input.value+' ':'')+t;grow()}}
+  catch(e){toastVoice('Voice: '+(e.message||e))}
+  finally{micUi(false);input.placeholder=ph;input.focus()}}
+function toastVoice(msg){const d=el('div','msg bot err');d.append(txt('span','who','Voice'),txt('span','',msg+'. Open System → Voice check.'));msgs.appendChild(d);$('#empty').hidden=true;d.scrollIntoView({behavior:'smooth',block:'end'})}
+$('#micBtn').onclick=()=>{
+  if(voiceMode!=='native'||!SR)return dictateRecord();
+  if(rec){rec.stop();return}rec=new SR();rec.interimResults=true;rec.continuous=false;rec.lang=navigator.language||'en-AU';
   const base=input.value?input.value+' ':'';rec.onresult=ev=>{let t='';for(const r of ev.results)t+=r[0].transcript;input.value=base+t;grow()};
-  rec.onend=()=>{rec=null;$('#micBtn').classList.remove('rec');$('#micBtn').setAttribute('aria-pressed','false');input.focus()};
-  rec.onerror=()=>{};$('#micBtn').classList.add('rec');$('#micBtn').setAttribute('aria-pressed','true');rec.start()};
+  rec.onend=()=>{rec=null;micUi(false);input.focus()};
+  rec.onerror=ev=>{if(['network','service-not-allowed','language-not-supported'].includes(ev.error)&&CAN_REC){setVoiceMode('record');rec=null;micUi(false);dictateRecord()}
+    else if(ev.error==='not-allowed')toastVoice('Microphone permission is blocked for this site')};
+  micUi(true);rec.start()};
 
 /* talk mode: hands-free voice conversation (opt-in). You speak -> it sends -> each bot answers aloud -> listens again.
    This is the one place a message sends without tapping Send, and only while Talk is on. Chat only: nothing runs. */
@@ -750,24 +795,48 @@ async function talkSpeak(out){
   for(const r of out){if(!talk)return;if(!r.ok)continue;$('#talkState').textContent=r.who+' is speaking…';
     await sayAsync(r.text,Math.max(0,BOTS().findIndex(b=>b.id===r.bot)))}
   if(talk)talkListen()}
+async function talkHeard(t){
+  if(!talk)return;t=(t||'').trim();
+  if(!t){setTimeout(talkListen,300);return}
+  if(/^(stop|end talk|stop talking)\.?$/i.test(t)){talkOff();return}
+  $('#talkState').textContent='Thinking…';input.value='';grow();setBusy(true);ctrl=new AbortController();
+  const r=await ask(t,{signal:ctrl.signal});ctrl=null;setBusy(false);talkSpeak(r.replies||[])}
+async function talkListenRecord(){
+  $('#talkState').textContent='Listening… (speak, then pause)';
+  try{const blob=await recordOnce({silence:true,maxMs:30000});if(!talk)return;
+    if(!blob){setTimeout(talkListen,200);return}
+    $('#talkState').textContent='Hearing you…';const t=await transcribeBlob(blob);input.value=t;grow();talkHeard(t)}
+  catch(e){talkOff();toastVoice('Talk: '+(e.message||e))}}
 function talkListen(){
-  if(!talk||!SR)return;$('#talkState').textContent='Listening…';input.value='';grow();
+  if(!talk)return;input.value='';grow();
+  if(voiceMode!=='native'||!SR)return talkListenRecord();
+  $('#talkState').textContent='Listening…';
   talkRec=new SR();talkRec.interimResults=true;talkRec.continuous=false;talkRec.lang=navigator.language||'en-AU';
-  let said='';talkRec.onresult=ev=>{said='';for(const r of ev.results)said+=r[0].transcript;input.value=said;grow()};
-  talkRec.onerror=ev=>{if(ev.error==='not-allowed'){talkOff();$('#talkState').textContent='Microphone blocked'}};
-  talkRec.onend=async()=>{talkRec=null;if(!talk)return;const t=said.trim();
-    if(!t){setTimeout(talkListen,300);return}
-    if(/^(stop|end talk|stop talking)\.?$/i.test(t)){talkOff();return}
-    $('#talkState').textContent='Thinking…';input.value='';grow();setBusy(true);ctrl=new AbortController();
-    const r=await ask(t,{signal:ctrl.signal});ctrl=null;setBusy(false);talkSpeak(r.replies||[])};
+  let said='',failed=false;talkRec.onresult=ev=>{said='';for(const r of ev.results)said+=r[0].transcript;input.value=said;grow()};
+  talkRec.onerror=ev=>{if(['network','service-not-allowed','language-not-supported'].includes(ev.error)&&CAN_REC){failed=true;setVoiceMode('record')}
+    else if(ev.error==='not-allowed'){talkOff();toastVoice('Microphone permission is blocked for this site')}};
+  talkRec.onend=()=>{talkRec=null;if(!talk)return;if(failed)return talkListenRecord();talkHeard(said)};
   try{talkRec.start()}catch(e){setTimeout(talkListen,500)}}
-function talkOn(){if(!SR){$('#talkBtn').setAttribute('aria-label','Talk mode needs speech recognition (Chrome)');return}
-  if(conv&&!conv.messages.length&&conv.title==='New chat'){} talk=true;$('#talkBtn').setAttribute('aria-pressed','true');$('#talkBar').hidden=false;talkListen()}
+function talkOn(){if(!SR&&!CAN_REC){toastVoice('This browser has no microphone support');return}
+  talk=true;$('#talkBtn').setAttribute('aria-pressed','true');$('#talkBar').hidden=false;talkListen()}
 function talkOff(){talk=false;$('#talkBtn').setAttribute('aria-pressed','false');$('#talkBar').hidden=true;
-  if(talkRec){try{talkRec.abort()}catch(e){}talkRec=null}if('speechSynthesis' in window)speechSynthesis.cancel();if(ctrl)ctrl.abort()}
-$('#talkBtn').hidden=!SR;
+  if(talkRec){try{talkRec.abort()}catch(e){}talkRec=null}if(recState)recState.stop();if('speechSynthesis' in window)speechSynthesis.cancel();if(ctrl)ctrl.abort()}
 $('#talkBtn').onclick=()=>talk?talkOff():talkOn();$('#talkStop').onclick=talkOff;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&talk)talkOff()});
+
+/* voice check: everything about voice on THIS browser, in one place */
+async function voiceCheck(){
+  const L=$('#voiceList');L.textContent='';const row=(ok,a,b)=>{const r=el('div','svc');const mid=el('div');mid.append(txt('b','',a),txt('small','',b||''));r.append(el('span','dot '+(ok===true?'UP':ok===false?'DOWN':'ERROR')),mid,txt('code','',ok===true?'yes':ok===false?'no':'?'));L.append(r)};
+  row(!!SR,'Built-in speech recognition',SR?'Chrome-style; may still fail on Edge/Samsung':'not in this browser: recording mode will be used');
+  row(CAN_REC,'Microphone recording','MediaRecorder + getUserMedia');
+  let perm='unknown';try{perm=(await navigator.permissions.query({name:'microphone'})).state}catch(e){}
+  row(perm==='granted'?true:perm==='denied'?false:null,'Microphone permission',perm);
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());row(true,'Microphone opens','ok')}
+  catch(e){row(false,'Microphone opens',e.name+': '+e.message)}
+  const vs=('speechSynthesis' in window)?speechSynthesis.getVoices().length:0;row(vs>0?true:('speechSynthesis' in window?null:false),'Read-aloud voices',vs+' voices');
+  try{const d=await (await fetch('/hub/voice',{cache:'no-store'})).json();d.stt.forEach(s=>row(s.ready,'Speech-to-text: '+s.id,s.ready?'ready':s.needs))}catch(e){row(false,'Hub speech-to-text','hub not reachable')}
+  row(null,'Voice mode in use',voiceMode+(SR&&CAN_REC?' (tap to switch)':''));
+  const sw=L.lastChild;if(SR&&CAN_REC){sw.style.cursor='pointer';sw.onclick=()=>{setVoiceMode(voiceMode==='native'?'record':'native');voiceCheck()}}}
 
 /* screen snapshot: one frame from screen share (desktop) or a screenshot from the gallery (phone) */
 function clearShot(){shot=null;$('#attach').hidden=true;$('#attach').textContent=''}

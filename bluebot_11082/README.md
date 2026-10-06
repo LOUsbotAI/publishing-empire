@@ -84,6 +84,14 @@ bash ~/publishing-empire/bluebot_11082/tools/LOUSTA_AI_CHECK.sh          # add -
 ```
 Read-only. The only thing it sends is two tiny "Reply with exactly: OK" prompts to the local model on 127.0.0.1. It ends with a PASS/DOWN summary and copies the report to Downloads.
 
+## Voice in any browser
+Chrome has built-in speech recognition. Edge, Samsung Internet and others often don't, or fail with "network". In those browsers the mic and Talk buttons **record** instead: the hub's `POST /hub/transcribe` takes the audio and returns text only, without storing anything. It tries these in order:
+1. local **whisper.cpp** (private, free): needs `ffmpeg`, `whisper-cli` and a model at `~/.lousta/whisper/ggml-base.bin`
+2. **Groq** speech-to-text (`GROQ_API_KEY`)
+3. **OpenAI** speech-to-text (`OPENAI_API_KEY`)
+
+**System → Voice check** shows exactly what works in your browser: recognition, mic permission, whether the mic opens, read-aloud voices, each speech-to-text backend, and the mode in use (tap it to switch).
+
 ## Multi-brain: BlueBot never stops
 BlueBot (11880) answers first. If it **times out (45 s), errors or returns nothing**, the hub tries the next brain in `modules.json` → `brains.order`:
 

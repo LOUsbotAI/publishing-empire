@@ -3,7 +3,7 @@
 
 Read-only by design, with one exception:
   - binds 127.0.0.1 only
-  - answers GET/HEAD; the ONLY write is POST /hub/chat, which forwards the
+  - answers GET/HEAD; the writes are POST /hub/chat and POST /hub/transcribe (audio in, text out), which forwards the
     body to the existing BlueBot chat route (127.0.0.1 .../api/chat).
     If BlueBot does not answer, brains.py asks the next brain (local Qwen/llama,
     then API-key providers from ~/.lousta/keys.env). Chat only. Every other write -> 405
@@ -25,6 +25,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 import brains
+import voice
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -37,6 +38,7 @@ STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
 VERSION = "BLUEBOT_HUB_11082_V3"
 MAX_CHAT_BYTES = 3 * 1024 * 1024   # room for one compressed screenshot
 MAX_READ_BYTES = 2 * 1024 * 1024
+MAX_AUDIO_BYTES = 10 * 1024 * 1024
 NEVER_PORTS = {11884}          # owner-manual input: never readable or reachable through the hub
 MODULE_RE = re.compile(r"^/modules/([a-z0-9_]{1,40})\.js$")
 
@@ -169,6 +171,8 @@ class Hub(BaseHTTPRequestHandler):
                 return self.send(200, fh.read(), "text/javascript; charset=utf-8")
         if path == "/hub/get":
             return self.read_proxy()
+        if path == "/hub/voice":
+            return self.send_json(200, voice.status(load_config()))
         if path == "/hub/brains":
             return self.send_json(200, brains.status(load_config()))
         if path == "/hub/status":
@@ -200,6 +204,8 @@ class Hub(BaseHTTPRequestHandler):
         self.send(code, data, ctype)
 
     def do_POST(self):
+        if urlsplit(self.path).path == "/hub/transcribe":
+            return self.transcribe()
         if urlsplit(self.path).path != "/hub/chat":
             return self.refuse()
         cfg = load_config()
@@ -249,6 +255,19 @@ class Hub(BaseHTTPRequestHandler):
             return self.send_json(200, {"reply": reply, "brain": bid, "route": ("BRAIN · " if direct else "FALLBACK · ") + label,
                                         "bluebot": why, "tried": tried})
         return self.send_json(502, {"error": "NO_BRAIN_ANSWERED", "bluebot": why, "tried": tried})
+
+    def transcribe(self):
+        """Audio in, text out. No side effects; the audio is not stored."""
+        n = int(self.headers.get("Content-Length") or 0)
+        if n <= 0 or n > MAX_AUDIO_BYTES:
+            return self.send_json(413, {"error": "AUDIO_SIZE", "max": MAX_AUDIO_BYTES})
+        ctype = (self.headers.get("Content-Type") or "audio/webm").split(";")[0].strip()
+        if not ctype.startswith("audio/") and ctype != "video/webm":
+            return self.send_json(415, {"error": "NOT_AUDIO"})
+        text, by, tried = voice.transcribe(load_config(), self.rfile.read(n), ctype)
+        if text is None:
+            return self.send_json(502, {"error": "NO_SPEECH_TO_TEXT", "tried": tried})
+        return self.send_json(200, {"text": text, "by": by, "tried": tried})
 
     def refuse(self):
         self.send_json(405, {"error": "READ_ONLY_HUB", "allowed": ["GET", "HEAD"]})

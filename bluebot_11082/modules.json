@@ -609,5 +609,19 @@
  "extra_pages": [
   "http://127.0.0.1:1182/bluebot-engineering-termux/portal/index.html"
  ],
- "_extra_pages_note": "Pages that live below a port's root. Connect reads their menus too and adds their features as tiles."
+ "_extra_pages_note": "Pages that live below a port's root. Connect reads their menus too and adds their features as tiles.",
+ "voice": {
+  "_note": "Speech-to-text for browsers without built-in speech recognition (e.g. Edge on Android). Order: local whisper.cpp first, then Groq/OpenAI if a key is set in ~/.lousta/keys.env. lang: '' = auto, or e.g. 'en'.",
+  "order": [
+   "local",
+   "groq",
+   "openai"
+  ],
+  "lang": "",
+  "local": {
+   "ffmpeg": "ffmpeg",
+   "whisper": "whisper-cli",
+   "model": "~/.lousta/whisper/ggml-base.bin"
+  }
+ }
 }
